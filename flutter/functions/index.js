@@ -2,14 +2,89 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 
-// Define secrets using Firebase Secret Manager
+
 const typesafeApiKey = defineSecret("TYPESAFE_API_KEY");
 const clientAuthToken = defineSecret("CLIENT_AUTH_TOKEN");
+
+
+
+const discordClientSecret = defineSecret("DISCORD_CLIENT_SECRET");
+const DISCORD_CLIENT_ID = "1555853808955822120";
+const DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
+const DISCORD_REVOKE_URL = "https://discord.com/api/oauth2/token/revoke";
+const DISCORD_REDIRECT_URI = "https://studycrowd-51fdd.web.app/auth-callback";
+
+exports.discordOauth = onRequest(
+  { secrets: [discordClientSecret], invoker: "public" },
+  async (req, res) => {
+    if (req.method !== "POST") {
+      res.status(405).json({ error: "Method Not Allowed. Use POST." });
+      return;
+    }
+
+    const secret = (discordClientSecret.value() || "").trim();
+    if (!secret) {
+      logger.error("DISCORD_CLIENT_SECRET is not set.");
+      res.status(500).json({ error: "Server configuration error." });
+      return;
+    }
+
+    const { action, code, redirect_uri, refresh_token, token } = req.body || {};
+    const body = new URLSearchParams({
+      client_id: DISCORD_CLIENT_ID,
+      client_secret: secret,
+    });
+
+    let url;
+    if (action === "exchange") {
+      if (!code || typeof code !== "string") {
+        res.status(400).json({ error: 'Missing "code".' });
+        return;
+      }
+      body.set("grant_type", "authorization_code");
+      body.set("code", code);
+      body.set("redirect_uri", typeof redirect_uri === "string" && redirect_uri ? redirect_uri : DISCORD_REDIRECT_URI);
+      url = DISCORD_TOKEN_URL;
+    } else if (action === "refresh") {
+      if (!refresh_token || typeof refresh_token !== "string") {
+        res.status(400).json({ error: 'Missing "refresh_token".' });
+        return;
+      }
+      body.set("grant_type", "refresh_token");
+      body.set("refresh_token", refresh_token);
+      url = DISCORD_TOKEN_URL;
+    } else if (action === "revoke") {
+      if (!token || typeof token !== "string") {
+        res.status(400).json({ error: 'Missing "token".' });
+        return;
+      }
+      body.set("token", token);
+      body.set("token_type_hint", "access_token");
+      url = DISCORD_REVOKE_URL;
+    } else {
+      res.status(400).json({ error: 'Invalid "action". Use "exchange", "refresh", or "revoke".' });
+      return;
+    }
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body,
+      });
+      const text = await response.text();
+      res.status(response.status).set("Content-Type", "application/json").send(text || "{}");
+    } catch (error) {
+      logger.error("discordOauth upstream error:", error);
+      res.status(502).json({ error: "Upstream Discord request failed." });
+    }
+  }
+);
 
 exports.classifyDiscordMessage = onRequest(
   { secrets: [typesafeApiKey, clientAuthToken], invoker: "public" },
   async (req, res) => {
-    // Only accept POST requests
+    
     if (req.method !== "POST") {
       res.status(405).json({ error: "Method Not Allowed. Use POST." });
       return;
@@ -103,7 +178,7 @@ exports.classifyDiscordMessage = onRequest(
 
       const data = await response.json();
 
-      // TypeSafe AI answers format: data.answers.category.choice
+      
       const categoryAnswer = data.answers && data.answers.category;
       const category =
         categoryAnswer?.choice ||

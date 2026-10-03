@@ -1,9 +1,6 @@
 {
   "hosting": {
     "public": "public",
-    "rewrites": [
-      { "source": "/app/**",     "run": { "serviceId": "app-api", "region": "australia-southeast1" } },
-      { "source": "/discord/**", "run": { "serviceId": "discord-bot", "region": "australia-southeast1" } }
-    ]
+    "cleanUrls": true
   }
 }

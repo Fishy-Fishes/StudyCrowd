@@ -13,13 +13,16 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"google.golang.org/api/option"
 
 	"cloud.google.com/go/firestore"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 
 	"context"
 	"regexp"
+
 	"github.com/google/uuid"
+	"google.golang.org/api/iterator"
 )
 
 var dateRegex = regexp.MustCompile(`(?i)\b(?:` +
@@ -203,6 +206,8 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 			"uuid":      uuid.NewString(),
 			"createdAt": time.Now().Unix(),
 			"author":    r.Author.ID,
+			"title":     r.Content,
+			"attending": []string{r.Author.ID},
 		}
 
 		_, t, found := extractDate(r.Content, time.Now())
@@ -222,19 +227,87 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 			Color:       0xFF0000,
 		}
 
-		_, err := s.ChannelMessageSendEmbed(r.ChannelID, embed)
+		msg, err := s.ChannelMessageSendEmbed(r.ChannelID, embed)
 		if err != nil {
 			panic(err)
 		}
 
-		_, _, err = db.Collection("guilds").Doc("test").Collection("posts").Add(context.Background(), post)
+		post["embed_message_id"] = msg.ID
+
+		_, _, err = db.Collection("posts").Add(context.Background(), post)
 		if err != nil {
 			return
 		}
 	}
 }
 
-func init() {
+func handleReactionAdd(db *firestore.Client, _ *discordgo.Session, r *discordgo.MessageReactionAdd) {
+	ctx := context.Background()
+
+	// Find the event corresponding to the Discord message.
+	iter := db.Collection("posts").
+		Where("embed_message_id", "==", r.MessageID).
+		Limit(1).
+		Documents(ctx)
+
+	doc, err := iter.Next()
+	if err == iterator.Done {
+		return // Not an event message.
+	}
+	if err != nil {
+		log.Printf("failed to find event: %v", err)
+		return
+	}
+
+	// Add the user to the attendance list.
+	_, err = doc.Ref.Update(ctx, []firestore.Update{
+		{
+			Path:  "attending",
+			Value: firestore.ArrayUnion(r.UserID),
+		},
+	})
+	if err != nil {
+		log.Printf("failed to add attendee: %v", err)
+		return
+	}
+
+	log.Printf("user %s joined event %s", r.UserID, doc.Ref.ID)
+}
+
+func handleReactionRemove(db *firestore.Client, _ *discordgo.Session, r *discordgo.MessageReactionRemove) {
+	ctx := context.Background()
+
+	// Find the event corresponding to the Discord message.
+	iter := db.Collection("posts").
+		Where("embed_message_id", "==", r.MessageID).
+		Limit(1).
+		Documents(ctx)
+
+	doc, err := iter.Next()
+	if err == iterator.Done {
+		return // Not an event message.
+	}
+	if err != nil {
+		log.Printf("failed to find event: %v", err)
+		return
+	}
+
+	// Remove the user from the attendance list.
+	_, err = doc.Ref.Update(ctx, []firestore.Update{
+		{
+			Path:  "attending",
+			Value: firestore.ArrayRemove(r.UserID),
+		},
+	})
+	if err != nil {
+		log.Printf("failed to remove attendee: %v", err)
+		return
+	}
+
+	log.Printf("user %s left event %s", r.UserID, doc.Ref.ID)
+}
+
+func main() {
 	var err error
 	db, err := firestore.NewClientWithDatabase(context.Background(), firestore.DetectProjectID, "studycrowd-db1")
 	if err != nil {
@@ -259,6 +332,14 @@ func init() {
 		handleMessageSent(jevToken, db, s, r)
 	})
 
+	session.AddHandler(func(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+		handleReactionAdd(db, s, r)
+	})
+
+	session.AddHandler(func(s *discordgo.Session, r *discordgo.MessageReactionRemove) {
+		handleReactionRemove(db, s, r)
+	})
+
 	err = session.Open()
 	if err != nil {
 		log.Fatalf("could not open session: %s", err)
@@ -273,11 +354,10 @@ func init() {
 		log.Printf("could not close session gracefully: %s", err)
 	}
 
-		functions.HTTP("health", health)
+	functions.HTTP("health", health)
 
 }
 
 func health(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "up")
 }
-
