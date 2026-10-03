@@ -24,7 +24,8 @@ func TestBuildEventEmbed(t *testing.T) {
 	if len(e.Fields) != 0 {
 		t.Errorf("zero date should add no field, got %d", len(e.Fields))
 	}
-	if !strings.Contains(e.Footer.Text, "ab12cd34") || !strings.Contains(e.Footer.Text, "React "+attendEmoji+" to attend") {
+	if !strings.Contains(e.Footer.Text, "ab12cd34") || !strings.Contains(e.Footer.Text, "1 going") ||
+		!strings.Contains(e.Footer.Text, "React "+attendEmoji+" to attend") {
 		t.Errorf("footer = %q", e.Footer.Text)
 	}
 	if e.Image == nil || e.Image.URL != "attachment://banner.png" {
@@ -54,5 +55,5 @@ func TestBuildEventEmbedUsesDisplayName(t *testing.T) {
 func TestUpdateAttendanceIgnoresOtherEmoji(t *testing.T) {
 	r := &discordgo.MessageReaction{UserID: "2", MessageID: "m", Emoji: discordgo.Emoji{Name: "👍"}}
 	// A nil client would panic if the reaction were not filtered out first.
-	updateAttendance(nil, &discordgo.Session{}, r, nil, "joined")
+	updateAttendance(nil, &discordgo.Session{}, r, true)
 }
