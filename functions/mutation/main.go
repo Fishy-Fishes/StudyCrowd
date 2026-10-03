@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"cloud.google.com/go/firestore"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
@@ -24,6 +25,10 @@ func init() {
 
 // FIXME: Authorisation with discord to get the appropriate user.
 func createPost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.NotFound(w, r)
+		return
+	}
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -31,6 +36,7 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 	form := r.MultipartForm.Value
 	post := map[string]any{
 		"uuid": uuid.NewString(),
+		"createdAt": time.Now().Unix(),
 	}
 	if title, ok := form["title"]; ok && len(title) > 0 {
 		post["title"] = title[0]
