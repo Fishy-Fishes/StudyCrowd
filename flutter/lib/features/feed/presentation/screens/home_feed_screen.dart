@@ -125,6 +125,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 authorName: _authorName(post),
                 timeAgo: post.timeAgo,
                 postContent: post.title,
+                eventDate: post.eventDate,
                 avatarAsset: 'assets/images/header_avatar.png',
                 avatarUrl: post.authorAvatar,
                 communityTag: post.serverName,
