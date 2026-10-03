@@ -22,22 +22,22 @@ class AppTheme {
         centerTitle: true,
       ),
       textTheme: TextTheme(
-        headlineLarge: GoogleFonts.italiana(
+        headlineLarge: GoogleFonts.inter(
           color: AppColors.textPrimary,
           fontSize: 36,
           fontWeight: FontWeight.w400,
         ),
-        headlineMedium: GoogleFonts.italiana(
+        headlineMedium: GoogleFonts.inter(
           color: AppColors.textPrimary,
           fontSize: 24,
           fontWeight: FontWeight.w400,
         ),
-        bodyLarge: GoogleFonts.italiana(
+        bodyLarge: GoogleFonts.inter(
           color: AppColors.textPrimary,
           fontSize: 16,
           height: 1.4,
         ),
-        bodyMedium: GoogleFonts.italiana(
+        bodyMedium: GoogleFonts.inter(
           color: AppColors.textPrimary,
           fontSize: 14,
           height: 1.43,
