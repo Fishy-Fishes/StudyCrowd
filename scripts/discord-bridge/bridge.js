@@ -22,6 +22,26 @@ const typeOnce=()=>api('POST',`/channels/${CHANNEL}/typing`,null,1).catch(()=>{}
 function startTyping(){ stopTyping(); typeOnce(); typing.t=setInterval(typeOnce,8000); typing.s=setTimeout(stopTyping,90000); }
 function stopTyping(){ clearInterval(typing.t); clearTimeout(typing.s); }
 
+// Image parsing: download image attachments so the session can open them with the Read tool.
+// Files go to $BRIDGE_IMAGE_DIR (default <tmpdir>/studycrowd-bridge-images); max 8 MB each, 4 per message.
+const IMG_DIR=process.env.BRIDGE_IMAGE_DIR||require('path').join(require('os').tmpdir(),'studycrowd-bridge-images');
+async function saveImages(d){
+  const out=[];
+  for(const a of (d.attachments||[]).slice(0,4)){
+    if(!(a.content_type||'').startsWith('image/')||a.size>8*1024*1024) continue;
+    try{
+      fs.mkdirSync(IMG_DIR,{recursive:true});
+      const ext=(a.filename.match(/\.[A-Za-z0-9]{1,5}$/)||['.png'])[0].toLowerCase();
+      const file=require('path').join(IMG_DIR,`${d.id}-${out.length}${ext}`);
+      const r=await fetch(a.url);
+      if(!r.ok) continue;
+      fs.writeFileSync(file,Buffer.from(await r.arrayBuffer()));
+      out.push(file);
+    }catch(e){console.log('[bridge] image download failed',e.message);}
+  }
+  return out;
+}
+
 let seq=null,hb=null,selfId=null,fails=0,warned=false;
 function connect(){
   const ws=new WebSocket('wss://gateway.discord.gg/?v=10&encoding=json');
@@ -53,7 +73,10 @@ function connect(){
       if(d.author.id===selfId){stopTyping();return;}
       if(d.author.bot) return;
       startTyping();
-      console.log(`[#claude] ${d.author.username} (${d.author.id}) msg ${d.id}: ${JSON.stringify(d.content)}${d.attachments&&d.attachments.length?` [+${d.attachments.length} attachment(s)]`:''}`);
+      const files=await saveImages(d);
+      const other=(d.attachments||[]).length-files.length;
+      console.log(`[#claude] ${d.author.username} (${d.author.id}) msg ${d.id}: ${JSON.stringify(d.content)}`+
+        files.map(f=>` [image: ${f}]`).join('')+(other>0?` [+${other} non-image attachment(s)]`:''));
     }
   };
 }
