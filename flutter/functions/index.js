@@ -58,13 +58,11 @@ exports.classifyDiscordMessage = onRequest(
         ignore:
           "Casual conversation, banter, off-topic or unhelpful messages. Also anything that does not invite others to a specific activity: " +
           "questions or comments about the bot, the app, code or pull requests, requests to work on or build something together, " +
-          "reporting or quoting what someone said earlier (e.g. 'u said u want to hang'), and hypotheticals.",
+          "reporting or quoting what someone said earlier (e.g. 'u said u want to hang'), hypotheticals, and agreeing to join or RSVPing to an event someone else proposed.",
         new_event:
           "The author is proposing or inviting others to a specific in-person or online activity they could join, such as a study session, " +
           "meeting, hangout or meal (e.g. 'anyone want to study at 2?', 'hanging out in building 80 later'). " +
           "Talking about, asking about or referring to an event or hangout is not enough.",
-        accept_event:
-          "The author agrees to join, confirms attendance or RSVPs yes to a specific event someone else proposed.",
       };
 
       const instructions =
