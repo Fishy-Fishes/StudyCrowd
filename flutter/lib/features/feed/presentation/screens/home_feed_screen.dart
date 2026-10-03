@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/tactile_button.dart';
 import '../../../auth/domain/discord_user.dart';
 import '../../../bookmarks/presentation/screens/bookmark_screen.dart';
 import '../../data/post_repository.dart';
 import '../../domain/study_post.dart';
 import '../widgets/app_header.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/new_post_sheet.dart';
 import '../widgets/study_post_card.dart';
 
 class HomeFeedScreen extends StatefulWidget {
@@ -62,6 +64,30 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                   ),
                 ],
               ),
+
+              if (_currentTabIndex == 0 && widget.currentUser != null)
+                Positioned(
+                  right: 18,
+                  bottom: 90 + MediaQuery.of(context).padding.bottom,
+                  child: TactileButton(
+                    onTap: () =>
+                        NewPostSheet.show(context, widget.currentUser!),
+                    pressedScale: 0.9,
+                    child: Container(
+                      width: 52,
+                      height: 52,
+                      decoration: const BoxDecoration(
+                        color: AppColors.accentPill,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.add_rounded,
+                        size: 30,
+                        color: AppColors.buttonText,
+                      ),
+                    ),
+                  ),
+                ),
 
               Positioned(
                 left: 0,

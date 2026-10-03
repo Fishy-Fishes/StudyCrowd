@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import '../../auth/domain/discord_user.dart';
 import '../domain/study_post.dart';
 
 
@@ -21,6 +22,25 @@ class PostRepository {
       _db.collection('users').doc(uid).collection('bookmarks');
 
   
+  /// Posts a study session from the app, in the same shape the Discord bot
+  /// writes. It has no Discord embed, so it lives only in the app feed.
+  static Future<void> createPost({
+    required DiscordUser author,
+    required String text,
+  }) {
+    final ref = _posts.doc();
+    return ref.set({
+      'uuid': ref.id,
+      'createdAt': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      'author': author.id,
+      'author_name': author.displayName,
+      'author_avatar': author.avatarUrl,
+      'title': text,
+      'attending': [author.id],
+      'attendee_names': {author.id: author.displayName},
+    });
+  }
+
   static Stream<List<StudyPost>> watchPosts() {
     return _posts
         .orderBy('createdAt', descending: true)
