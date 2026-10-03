@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -22,11 +23,42 @@ func init() {
 	functions.HTTP("CreatePost", createPost)
 }
 
+// FIXME: Authorisation with discord to get the appropriate user.
 func createPost(w http.ResponseWriter, r *http.Request) {
-	ref, _, err := db.Collection("guilds").Doc("test").Collection("posts").Add(r.Context(), map[string]any{
-		"title":     uuid.NewString(),
+	if r.Method != "POST" {
+		http.NotFound(w, r)
+		return
+	}
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	form := r.MultipartForm.Value
+	post := map[string]any{
+		"uuid": uuid.NewString(),
 		"createdAt": time.Now().Unix(),
-	})
+	}
+	if title, ok := form["title"]; ok && len(title) > 0 {
+		post["title"] = title[0]
+	} else {
+		http.Error(w, "Missing title field", http.StatusBadRequest)
+		return
+	}
+
+	if timestamp_raw, ok := form["timestamp"]; ok && len(timestamp_raw) > 0 {
+		if timestamp, err := strconv.Atoi(timestamp_raw[0]); err == nil {
+			post["timestamp"] = timestamp
+		} else {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+
+	if location, ok := form["location"]; ok && len(location) > 0 {
+		post["location"] = location[0]
+	}
+
+	ref, _, err := db.Collection("guilds").Doc("test").Collection("posts").Add(r.Context(), post)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
