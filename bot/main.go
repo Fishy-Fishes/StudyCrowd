@@ -391,9 +391,14 @@ func refreshGoingCount(s *discordgo.Session, doc *firestore.DocumentSnapshot) {
 		return
 	}
 	embed.Footer = footer
+	// A fetched embed points at the banner's CDN URL; without the attachment:// reference
+	// Discord would also show the banner as a separate attachment.
+	embed.Image = &discordgo.MessageEmbedImage{URL: "attachment://" + bannerFile}
 	if _, err := s.ChannelMessageEditEmbed(post.ChannelID, post.MessageID, embed); err != nil {
 		log.Printf("failed to update going count for event %s: %v", doc.Ref.ID, err)
+		return
 	}
+	log.Printf("event %s: %d going", doc.Ref.ID, len(post.Attending))
 }
 
 const firestoreDatabase = "studycrowd-db1"
