@@ -208,6 +208,13 @@ func jevCall(bearerToken string, message string) (JevMessage, error) {
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return jevMsg, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return jevMsg, fmt.Errorf("classifier returned %s", resp.Status)
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -231,7 +238,7 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 	jevRes, err := jevCall(jevBearerToken, r.Content)
 
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Printf("failed to classify message: %v", err)
 		return
 	}
 
