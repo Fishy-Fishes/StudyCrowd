@@ -18,7 +18,15 @@ class CommentsScreen extends StatelessWidget {
   final StudyPost post;
   final DiscordUser? user;
 
-  const CommentsScreen({super.key, required this.post, this.user});
+  /// Comments to show; defaults to the post's comments in Firestore.
+  final Stream<List<Comment>>? comments;
+
+  const CommentsScreen({
+    super.key,
+    required this.post,
+    this.user,
+    this.comments,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +37,7 @@ class CommentsScreen extends StatelessWidget {
           const _TopBar(),
           Expanded(
             child: StreamBuilder<List<Comment>>(
-              stream: CommentRepository.watchComments(post.id),
+              stream: comments ?? CommentRepository.watchComments(post.id),
               builder: (context, snapshot) {
                 final comments = snapshot.data ?? const <Comment>[];
                 return ListView(
