@@ -8,6 +8,7 @@ import '../../data/post_repository.dart';
 import '../../domain/study_post.dart';
 import '../widgets/app_header.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/new_post_button.dart';
 import '../widgets/study_post_card.dart';
 
 class HomeFeedScreen extends StatefulWidget {
@@ -63,6 +64,13 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                   ),
                 ],
               ),
+
+              if (_currentTabIndex == 0 && widget.currentUser != null)
+                Positioned(
+                  right: 18,
+                  bottom: 90 + MediaQuery.of(context).padding.bottom,
+                  child: NewPostButton(user: widget.currentUser!),
+                ),
 
               Positioned(
                 left: 0,
