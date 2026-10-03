@@ -130,6 +130,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 avatarUrl: post.authorAvatar,
                 communityTag: post.serverName,
                 attendeeCount: post.attendeeCount,
+                commentCount: post.commentCount,
                 attendeeNames: post.attendeeNames,
                 showGoingButton: true,
                 isGoing: _currentUser != null &&

@@ -26,17 +26,23 @@ class CommentRepository {
         );
   }
 
+  /// Adds a comment and bumps the post's comment_count in the same batch.
   static Future<void> addComment({
     required String postId,
     required DiscordUser author,
     required String text,
   }) {
-    return _comments(postId).add({
-      'author': author.id,
-      'author_name': author.displayName,
-      'author_avatar': author.avatarUrl,
-      'text': text,
-      'createdAt': DateTime.now().millisecondsSinceEpoch ~/ 1000,
-    });
+    return (_db.batch()
+          ..set(_comments(postId).doc(), {
+            'author': author.id,
+            'author_name': author.displayName,
+            'author_avatar': author.avatarUrl,
+            'text': text,
+            'createdAt': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          })
+          ..update(_db.collection('posts').doc(postId), {
+            'comment_count': FieldValue.increment(1),
+          }))
+        .commit();
   }
 }

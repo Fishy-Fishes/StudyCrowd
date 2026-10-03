@@ -13,6 +13,7 @@ class StudyPostCard extends StatelessWidget {
   final String? avatarUrl;
   final String? mediaAsset;
   final int attendeeCount;
+  final int? commentCount;
   final String? attendeeNames;
   final bool showGoingButton;
   final bool isGoing;
@@ -30,6 +31,7 @@ class StudyPostCard extends StatelessWidget {
     this.communityTag,
     this.mediaAsset,
     this.attendeeCount = 0,
+    this.commentCount,
     this.attendeeNames,
     this.showGoingButton = false,
     this.isGoing = false,
@@ -204,6 +206,19 @@ class StudyPostCard extends StatelessWidget {
                                 '$attendeeCount',
                                 style: AppTextStyles.caption,
                               ),
+                              if (commentCount != null) ...[
+                                const SizedBox(width: 10),
+                                const Icon(
+                                  Icons.chat_bubble_outline_rounded,
+                                  color: Colors.white,
+                                  size: 15,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '$commentCount',
+                                  style: AppTextStyles.caption,
+                                ),
+                              ],
                               if (attendeeNames != null) ...[
                                 const SizedBox(width: 8),
                                 Flexible(

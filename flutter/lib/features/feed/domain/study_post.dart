@@ -15,6 +15,7 @@ class StudyPost {
   /// The day the bot parsed from the message ("tomorrow", "next thursday"), if any.
   final int? eventAtSeconds;
   final List<String> attending;
+  final int commentCount;
   final Map<String, String> attendeeNameById;
 
   const StudyPost({
@@ -29,6 +30,7 @@ class StudyPost {
     this.createdAtSeconds,
     this.eventAtSeconds,
     this.attending = const [],
+    this.commentCount = 0,
     this.attendeeNameById = const {},
   });
 
@@ -50,6 +52,7 @@ class StudyPost {
           ? attending.map((e) => e.toString()).toList()
           : const [],
       eventAtSeconds: (data['timestamp'] as num?)?.toInt(),
+      commentCount: (data['comment_count'] as num?)?.toInt() ?? 0,
       attendeeNameById:
           (data['attendee_names'] as Map?)?.cast<String, String>() ?? const {},
     );
