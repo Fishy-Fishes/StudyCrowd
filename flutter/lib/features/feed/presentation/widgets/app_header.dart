@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_layout.dart';
 import '../../../../core/widgets/tactile_button.dart';
 import '../../../auth/data/discord_auth_service.dart';
 import '../../../auth/domain/discord_user.dart';
@@ -134,7 +135,11 @@ class AppHeader extends StatelessWidget {
       color: AppColors.headerBackground,
       child: SafeArea(
         bottom: false,
-        child: Container(
+        // The bar is full width; its contents line up with the capped content column.
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: AppLayout.maxContentWidth),
+            child: Container(
           height: 64,
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Row(
@@ -183,6 +188,8 @@ class AppHeader extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
           ),
         ),
       ),
