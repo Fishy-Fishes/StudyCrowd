@@ -10,7 +10,8 @@ const [,, mid, ...rest]=process.argv; const content=rest.join(" ");
     const r=await fetch(`https://discord.com/api/v10/channels/${CH}/messages`,{method:"POST",
       headers:{Authorization:"Bot "+T,"Content-Type":"application/json"},body:JSON.stringify(body)});
     if(r.status===429){const j=await r.json();await new Promise(x=>setTimeout(x,(j.retry_after||2)*1000));continue;}
-    console.log(r.status); return;
+    // On failure, print Discord's error body (code + message) so the cause is visible.
+    console.log(r.ok?r.status:`${r.status} ${(await r.text()).slice(0,300)}`); return;
   }
   console.log("gave up (rate limited)"); process.exit(1);
 })();

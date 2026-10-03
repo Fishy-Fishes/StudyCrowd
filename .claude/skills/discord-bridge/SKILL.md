@@ -10,8 +10,9 @@ Forwards messages from Discord channels whose name contains `claude` into this s
 ## Files
 
 - `scripts/discord-bridge/run.sh`: starts the Gateway listener. Prints `[bridge] ready as <bot>` once connected, then one line per message: `[#channel] user (id) msg <id>: "<content>"`.
-- `scripts/discord-bridge/reply.js`: `node --no-warnings reply.js <message_id> <text...>` replies to a message in the `claude` channel.
-- `scripts/discord-bridge/who.js`: `node --no-warnings who.js <user_id>` looks up a user's public name.
+- `scripts/discord-bridge/reply.js`: `NODE_USE_ENV_PROXY=1 node --no-warnings reply.js <message_id> <text...>` replies to a message in the `claude` channel. On failure it prints the status and Discord's error body.
+- `scripts/discord-bridge/who.js`: `NODE_USE_ENV_PROXY=1 node --no-warnings who.js <user_id>` looks up a user's public name.
+- `NODE_USE_ENV_PROXY=1` matters in cloud sessions: Node's built-in `fetch` ignores `HTTPS_PROXY`, so without it requests to `discord.com` skip the session proxy and fail with `403 Host not in allowlist`. `run.sh` sets it for the bridge.
 - Token: `$DISCORD_BOT_TOKEN` if set, otherwise the file `~/.config/studycrowd/bot-token` (mode 0600) or `$BRIDGE_TOKEN_FILE`. Never commit it, print it, or post it to Discord.
 
 ## Environment
