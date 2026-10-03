@@ -59,27 +59,39 @@ class BookmarkPostCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Flexible(
-                      child: Text(
-                        authorName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.authorName,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              authorName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.authorName,
+                            ),
+                          ),
+                          if (timeAgo != null) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              timeAgo!,
+                              style: AppTextStyles.timestamp,
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    if (timeAgo != null) ...[
+                    if (communityTag != null) ...[
                       const SizedBox(width: 6),
-                      Text(
-                        timeAgo!,
-                        style: AppTextStyles.timestamp,
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 150),
+                        child: Text(
+                          communityTag!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.tag,
+                        ),
                       ),
                     ],
-                    const Spacer(),
-                    if (communityTag != null)
-                      Text(
-                        communityTag!,
-                        style: AppTextStyles.tag,
-                      ),
                   ],
                 ),
 

@@ -94,7 +94,12 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
                   onRemove: () => _removeBookmark(post),
                 ),
                 if (index < bookmarks.length - 1)
-                  const Divider(height: 1, thickness: 1, color: Colors.white),
+                  const Padding(
+                    // Match the card's bottom padding so the next card
+                    // doesn't sit on the line.
+                    padding: EdgeInsets.only(bottom: 14),
+                    child: Divider(height: 1, thickness: 1, color: Colors.white),
+                  ),
               ],
             );
           },
