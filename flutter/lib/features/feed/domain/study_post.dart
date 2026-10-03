@@ -11,6 +11,7 @@ class StudyPost {
   final String? uuid;
   final int? createdAtSeconds;
   final List<String> attending;
+  final int commentCount;
   final Map<String, String> attendeeNameById;
 
   const StudyPost({
@@ -24,6 +25,7 @@ class StudyPost {
     this.uuid,
     this.createdAtSeconds,
     this.attending = const [],
+    this.commentCount = 0,
     this.attendeeNameById = const {},
   });
 
@@ -44,6 +46,7 @@ class StudyPost {
       attending: attending is List
           ? attending.map((e) => e.toString()).toList()
           : const [],
+      commentCount: (data['comment_count'] as num?)?.toInt() ?? 0,
       attendeeNameById:
           (data['attendee_names'] as Map?)?.cast<String, String>() ?? const {},
     );

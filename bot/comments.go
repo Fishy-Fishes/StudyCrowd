@@ -42,7 +42,10 @@ func saveDiscordComment(db *firestore.Client, s *discordgo.Session, r *discordgo
 		return false
 	}
 
-	if _, _, err := post.Ref.Collection("comments").Add(ctx, comment); err != nil {
+	batch := db.Batch()
+	batch.Create(post.Ref.Collection("comments").NewDoc(), comment)
+	batch.Update(post.Ref, []firestore.Update{{Path: "comment_count", Value: firestore.Increment(1)}})
+	if _, err := batch.Commit(ctx); err != nil {
 		log.Printf("failed to save comment on event %s: %v", post.Ref.ID, err)
 	}
 	return true
