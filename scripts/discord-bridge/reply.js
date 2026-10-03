@@ -1,6 +1,6 @@
 // Usage: node reply.js <message_id|-> <text...>   Posts to the bridge channel (no lookups); retries on rate limits.
 const fs=require("fs");
-const T=fs.readFileSync(process.env.BRIDGE_TOKEN_FILE||require("os").homedir()+"/.config/studycrowd/bot-token","utf8").trim();
+const T=process.env.DISCORD_BOT_TOKEN||fs.readFileSync(process.env.BRIDGE_TOKEN_FILE||require("os").homedir()+"/.config/studycrowd/bot-token","utf8").trim();
 const CH=process.env.BRIDGE_CHANNEL_ID||"1555999577637781604";
 const [,, mid, ...rest]=process.argv; const content=rest.join(" ");
 (async()=>{

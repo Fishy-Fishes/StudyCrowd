@@ -12,13 +12,23 @@ Forwards messages from Discord channels whose name contains `claude` into this s
 - `scripts/discord-bridge/run.sh`: starts the Gateway listener. Prints `[bridge] ready as <bot>` once connected, then one line per message: `[#channel] user (id) msg <id>: "<content>"`.
 - `scripts/discord-bridge/reply.js`: `node --no-warnings reply.js <message_id> <text...>` replies to a message in the `claude` channel.
 - `scripts/discord-bridge/who.js`: `node --no-warnings who.js <user_id>` looks up a user's public name.
-- Token: `~/.config/studycrowd/bot-token` (mode 0600) or `$BRIDGE_TOKEN_FILE`. Never commit it, print it, or post it to Discord.
+- Token: `$DISCORD_BOT_TOKEN` if set, otherwise the file `~/.config/studycrowd/bot-token` (mode 0600) or `$BRIDGE_TOKEN_FILE`. Never commit it, print it, or post it to Discord.
+
+## Environment
+
+The cloud environment is configured with these variables, so they should already be set in a new session:
+
+- `DISCORD_BOT_TOKEN`: the StudyCrowd bot token (used by the bridge scripts and by `bot/`).
+- `CLIENT_AUTH_TOKEN`: bearer token for the Jev classification function.
+- `FIRESTORE_PROJECT_ID` and `FIRESTORE_API_KEY`: when both are set, `bot/` uses them for Firestore, otherwise it falls back to the detected project and credentials.
+
+Check they are present without printing values, for example `[ -n "$DISCORD_BOT_TOKEN" ] && echo present || echo MISSING`. Changes to environment variables only reach a new session. Never ask the user to paste a secret into chat or Discord.
 
 ## Start
 
 Run a Monitor with `timeout_ms: 1800000` (the 30 minute maximum) and command `<repo>/scripts/discord-bridge/run.sh`, description `Discord #claude channel messages via gateway bridge`. Wait for `ready as`.
 
-If `~/.config/studycrowd/bot-token` is missing, ask the user for a bot token and write it there with `umask 077`.
+If neither `$DISCORD_BOT_TOKEN` nor `~/.config/studycrowd/bot-token` is available, tell the user the environment variable is missing instead of asking for the token in chat.
 
 ## Keep it persistent
 

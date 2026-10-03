@@ -2,7 +2,8 @@
 // Reconnects on drops and tells the channel when it is unhealthy or recovered.
 // Exit code 2 = fatal (bad token / missing intents).
 const fs=require('fs');
-const TOKEN=fs.readFileSync(process.env.BRIDGE_TOKEN_FILE||require('os').homedir()+'/.config/studycrowd/bot-token','utf8').trim();
+// Token: $DISCORD_BOT_TOKEN if set, else the file $BRIDGE_TOKEN_FILE (default ~/.config/studycrowd/bot-token).
+const TOKEN=process.env.DISCORD_BOT_TOKEN||fs.readFileSync(process.env.BRIDGE_TOKEN_FILE||require('os').homedir()+'/.config/studycrowd/bot-token','utf8').trim();
 const CHANNEL=process.env.BRIDGE_CHANNEL_ID||'1555999577637781604';
 const API='https://discord.com/api/v10', H={Authorization:'Bot '+TOKEN,'Content-Type':'application/json'};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));

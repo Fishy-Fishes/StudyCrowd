@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"google.golang.org/api/option"
 
 	"cloud.google.com/go/firestore"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
@@ -349,15 +350,36 @@ func handleReactionRemove(db *firestore.Client, s *discordgo.Session, r *discord
 	log.Printf("user %s left event %s", r.UserID, doc.Ref.ID)
 }
 
+const firestoreDatabase = "studycrowd-db1"
+
+// newFirestoreClient uses FIRESTORE_PROJECT_ID and FIRESTORE_API_KEY when both are set
+// (local or sandbox runs). Otherwise it falls back to the project and credentials
+// detected from the environment, as on Cloud Run.
+func newFirestoreClient(ctx context.Context) (*firestore.Client, error) {
+	project, key := os.Getenv("FIRESTORE_PROJECT_ID"), os.Getenv("FIRESTORE_API_KEY")
+	if project != "" && key != "" {
+		log.Printf("firestore: using FIRESTORE_PROJECT_ID %q with an API key", project)
+		return firestore.NewClientWithDatabase(ctx, project, firestoreDatabase, option.WithAPIKey(key))
+	}
+	log.Print("firestore: using detected project and credentials")
+	return firestore.NewClientWithDatabase(ctx, firestore.DetectProjectID, firestoreDatabase)
+}
+
+// discordBotToken prefers DISCORD_BOT_TOKEN and falls back to the older DISCORD_TOKEN.
+func discordBotToken() string {
+	if t := os.Getenv("DISCORD_BOT_TOKEN"); t != "" {
+		return t
+	}
+	return os.Getenv("DISCORD_TOKEN")
+}
+
 func main() {
-	var err error
-	db, err := firestore.NewClientWithDatabase(context.Background(), firestore.DetectProjectID, "studycrowd-db1")
+	db, err := newFirestoreClient(context.Background())
 	if err != nil {
 		panic(err)
 	}
 
-	discordToken := os.Getenv("DISCORD_TOKEN")
-	session, err := discordgo.New("Bot " + discordToken)
+	session, err := discordgo.New("Bot " + discordBotToken())
 
 	if err != nil {
 		fmt.Println(err.Error())
