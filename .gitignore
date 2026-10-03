@@ -83,3 +83,9 @@ ui-debug.log*
 .env.*
 functions/.env
 functions/.env.*
+
+# Firebase CLI local data
+.firebase/
+
+# Local chat export (contains credentials/transcript)
+CHAT_EXPORT.md
