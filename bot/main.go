@@ -241,6 +241,9 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 	if r.Author.Bot {
 		return
 	}
+	if saveDiscordComment(db, s, r) {
+		return // Replies to an event are comments, not new events.
+	}
 
 	jevRes, err := jevCall(jevBearerToken, r.Content)
 
@@ -518,6 +521,7 @@ func main() {
 	}
 
 	go watchGoingCounts(db, session)
+	go watchAppComments(db, session)
 
 	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, os.Interrupt)

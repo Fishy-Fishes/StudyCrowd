@@ -1,3 +1,4 @@
+import '../../../core/utils/time_ago.dart' as time;
 
 class StudyPost {
   final String id;
@@ -55,14 +56,5 @@ class StudyPost {
       attending.map((id) => attendeeNameById[id]).whereType<String>().join(', ');
 
   
-  String get timeAgo {
-    final sec = createdAtSeconds;
-    if (sec == null) return '';
-    final diff = DateTime.now()
-        .difference(DateTime.fromMillisecondsSinceEpoch(sec * 1000));
-    if (diff.inDays >= 1) return '.${diff.inDays}d';
-    if (diff.inHours >= 1) return '.${diff.inHours}h';
-    if (diff.inMinutes >= 1) return '.${diff.inMinutes}min';
-    return '.now';
-  }
+  String get timeAgo => time.timeAgo(createdAtSeconds);
 }
