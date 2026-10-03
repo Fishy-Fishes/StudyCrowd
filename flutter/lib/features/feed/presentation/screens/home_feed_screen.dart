@@ -3,6 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../auth/domain/discord_user.dart';
 import '../../../bookmarks/presentation/screens/bookmark_screen.dart';
+import '../../../comments/presentation/screens/comments_screen.dart';
 import '../../data/post_repository.dart';
 import '../../domain/study_post.dart';
 import '../widgets/app_header.dart';
@@ -117,7 +118,12 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
           padding: const EdgeInsets.only(top: 18.0, bottom: 90.0),
           children: [
             for (final post in posts)
-              StudyPostCard(
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => CommentsScreen(post: post, user: _currentUser),
+                )),
+                child: StudyPostCard(
                 authorName: _authorName(post),
                 timeAgo: post.timeAgo,
                 postContent: post.title,
@@ -130,6 +136,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 isGoing: _currentUser != null &&
                     post.attending.contains(_currentUser!.id),
                 onGoingPressed: () => _toggleRsvp(post),
+                ),
               ),
           ],
         );
