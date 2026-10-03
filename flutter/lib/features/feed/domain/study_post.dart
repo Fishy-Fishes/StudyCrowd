@@ -1,3 +1,4 @@
+import '../../../core/utils/event_date.dart';
 import '../../../core/utils/time_ago.dart' as time;
 
 class StudyPost {
@@ -10,6 +11,9 @@ class StudyPost {
   final String? embedMessageId;
   final String? uuid;
   final int? createdAtSeconds;
+
+  /// The day the bot parsed from the message ("tomorrow", "next thursday"), if any.
+  final int? eventAtSeconds;
   final List<String> attending;
   final int commentCount;
   final Map<String, String> attendeeNameById;
@@ -24,6 +28,7 @@ class StudyPost {
     this.embedMessageId,
     this.uuid,
     this.createdAtSeconds,
+    this.eventAtSeconds,
     this.attending = const [],
     this.commentCount = 0,
     this.attendeeNameById = const {},
@@ -46,6 +51,7 @@ class StudyPost {
       attending: attending is List
           ? attending.map((e) => e.toString()).toList()
           : const [],
+      eventAtSeconds: (data['timestamp'] as num?)?.toInt(),
       commentCount: (data['comment_count'] as num?)?.toInt() ?? 0,
       attendeeNameById:
           (data['attendee_names'] as Map?)?.cast<String, String>() ?? const {},
@@ -60,4 +66,10 @@ class StudyPost {
 
   
   String get timeAgo => time.timeAgo(createdAtSeconds);
+
+  String? get eventDate => eventAtSeconds == null
+      ? null
+      : formatEventDate(
+          DateTime.fromMillisecondsSinceEpoch(eventAtSeconds! * 1000),
+        );
 }

@@ -47,6 +47,7 @@ class CommentsScreen extends StatelessWidget {
                       authorName: post.authorName ?? '@${post.author}',
                       timeAgo: post.timeAgo,
                       postContent: post.title,
+                      eventDate: post.eventDate,
                       avatarAsset: _defaultAvatar,
                       avatarUrl: post.authorAvatar,
                       communityTag: post.serverName,

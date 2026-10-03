@@ -8,6 +8,7 @@ class StudyPostCard extends StatelessWidget {
   final String timeAgo;
   final String? communityTag;
   final String postContent;
+  final String? eventDate;
   final String avatarAsset;
   final String? avatarUrl;
   final String? mediaAsset;
@@ -24,6 +25,7 @@ class StudyPostCard extends StatelessWidget {
     required this.authorName,
     required this.timeAgo,
     required this.postContent,
+    this.eventDate,
     required this.avatarAsset,
     this.avatarUrl,
     this.communityTag,
@@ -143,6 +145,21 @@ class StudyPostCard extends StatelessWidget {
                     postContent,
                     style: AppTextStyles.description,
                   ),
+
+                  if (eventDate != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.event_outlined,
+                          color: Colors.white,
+                          size: 15,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(eventDate!, style: AppTextStyles.caption),
+                      ],
+                    ),
+                  ],
 
                   const SizedBox(height: 8),
 
