@@ -99,9 +99,14 @@ class StudyPostCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       if (communityTag != null) ...[
-                        Text(
-                          communityTag!,
-                          style: AppTextStyles.tag,
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 150),
+                          child: Text(
+                            communityTag!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.tag,
+                          ),
                         ),
                         if (onRemove != null) const SizedBox(width: 8),
                       ],
