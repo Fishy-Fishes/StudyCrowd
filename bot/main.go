@@ -13,12 +13,14 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"google.golang.org/api/option"
 
 	"cloud.google.com/go/firestore"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 
 	"context"
 	"regexp"
+
 	"github.com/google/uuid"
 )
 
@@ -203,6 +205,8 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 			"uuid":      uuid.NewString(),
 			"createdAt": time.Now().Unix(),
 			"author":    r.Author.ID,
+			"title":     r.Content,
+			"attending": []string{r.Author.ID},
 		}
 
 		_, t, found := extractDate(r.Content, time.Now())
@@ -222,12 +226,14 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 			Color:       0xFF0000,
 		}
 
-		_, err := s.ChannelMessageSendEmbed(r.ChannelID, embed)
+		msg, err := s.ChannelMessageSendEmbed(r.ChannelID, embed)
 		if err != nil {
 			panic(err)
 		}
 
-		_, _, err = db.Collection("guilds").Doc("test").Collection("posts").Add(context.Background(), post)
+		post["embed_message_id"] = msg.ID
+
+		_, _, err = db.Collection("posts").Add(context.Background(), post)
 		if err != nil {
 			return
 		}
@@ -273,11 +279,10 @@ func init() {
 		log.Printf("could not close session gracefully: %s", err)
 	}
 
-		functions.HTTP("health", health)
+	functions.HTTP("health", health)
 
 }
 
 func health(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "up")
 }
-
