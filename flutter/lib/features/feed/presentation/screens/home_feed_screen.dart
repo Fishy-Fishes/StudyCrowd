@@ -117,6 +117,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 avatarUrl: post.authorAvatar,
                 communityTag: post.serverName,
                 attendeeCount: post.attendeeCount,
+                attendeeNames: post.attendeeNames,
                 showGoingButton: true,
                 isGoing: _currentUser != null &&
                     post.attending.contains(_currentUser!.id),
@@ -133,7 +134,11 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   void _toggleRsvp(StudyPost post) {
     final user = widget.currentUser;
     if (user == null) return;
-    PostRepository.toggleRsvp(postId: post.id, userId: user.id).catchError(
+    PostRepository.toggleRsvp(
+      postId: post.id,
+      userId: user.id,
+      userName: user.displayName,
+    ).catchError(
       (Object e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

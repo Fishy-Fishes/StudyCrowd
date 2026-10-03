@@ -10,6 +10,7 @@ class StudyPost {
   final String? uuid;
   final int? createdAtSeconds;
   final List<String> attending;
+  final Map<String, String> attendeeNameById;
 
   const StudyPost({
     required this.id,
@@ -22,6 +23,7 @@ class StudyPost {
     this.uuid,
     this.createdAtSeconds,
     this.attending = const [],
+    this.attendeeNameById = const {},
   });
 
   factory StudyPost.fromDoc(String id, Map<String, dynamic> data) {
@@ -41,10 +43,16 @@ class StudyPost {
       attending: attending is List
           ? attending.map((e) => e.toString()).toList()
           : const [],
+      attendeeNameById:
+          (data['attendee_names'] as Map?)?.cast<String, String>() ?? const {},
     );
   }
 
   int get attendeeCount => attending.length;
+
+  /// Names of attendees in RSVP order, skipping anyone whose name isn't known.
+  String get attendeeNames =>
+      attending.map((id) => attendeeNameById[id]).whereType<String>().join(', ');
 
   
   String get timeAgo {

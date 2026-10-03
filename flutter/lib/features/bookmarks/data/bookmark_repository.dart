@@ -34,7 +34,10 @@ class BookmarkRepository {
     batch.delete(_bookmarksFor(userId).doc(postId));
     batch.update(
       _db.collection('posts').doc(postId),
-      {'attending': FieldValue.arrayRemove([userId])},
+      {
+        'attending': FieldValue.arrayRemove([userId]),
+        'attendee_names.$userId': FieldValue.delete(),
+      },
     );
     await batch.commit();
   }
