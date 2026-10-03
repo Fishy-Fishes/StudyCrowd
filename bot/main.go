@@ -245,11 +245,9 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 			"attending": []string{r.Author.ID},
 		}
 
-		_, t, found := extractDate(r.Content, time.Now())
-		if found && !t.IsZero() {
+		_, t, _ := extractDate(r.Content, time.Now())
+		if !t.IsZero() {
 			post["timestamp"] = t.Unix()
-		} else {
-			t = time.Time{} // an unparsed explicit date comes back zero; don't show it
 		}
 
 		msg, err := s.ChannelMessageSendComplex(r.ChannelID, &discordgo.MessageSend{
@@ -274,9 +272,14 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 	}
 }
 
+// isSelf reports whether userID is the bot (its seed reaction is not an attendee).
+func isSelf(s *discordgo.Session, userID string) bool {
+	return s.State != nil && s.State.User != nil && s.State.User.ID == userID
+}
+
 func handleReactionAdd(db *firestore.Client, s *discordgo.Session, r *discordgo.MessageReactionAdd) {
-	if s.State != nil && s.State.User != nil && r.UserID == s.State.User.ID {
-		return // the bot's own seed reaction is not an attendee
+	if isSelf(s, r.UserID) {
+		return
 	}
 	ctx := context.Background()
 
@@ -311,7 +314,7 @@ func handleReactionAdd(db *firestore.Client, s *discordgo.Session, r *discordgo.
 }
 
 func handleReactionRemove(db *firestore.Client, s *discordgo.Session, r *discordgo.MessageReactionRemove) {
-	if s.State != nil && s.State.User != nil && r.UserID == s.State.User.ID {
+	if isSelf(s, r.UserID) {
 		return
 	}
 	ctx := context.Background()

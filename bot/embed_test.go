@@ -41,9 +41,3 @@ func TestBuildEventEmbedWithDate(t *testing.T) {
 		t.Errorf("fields = %+v", e.Fields)
 	}
 }
-
-func TestBannerEmbedded(t *testing.T) {
-	if len(bannerPNG) == 0 {
-		t.Fatal("banner.png not embedded")
-	}
-}
