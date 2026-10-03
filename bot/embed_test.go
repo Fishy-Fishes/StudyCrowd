@@ -50,3 +50,9 @@ func TestBuildEventEmbedUsesDisplayName(t *testing.T) {
 		t.Errorf("author = %q", e.Author.Name)
 	}
 }
+
+func TestUpdateAttendanceIgnoresOtherEmoji(t *testing.T) {
+	r := &discordgo.MessageReaction{UserID: "2", MessageID: "m", Emoji: discordgo.Emoji{Name: "👍"}}
+	// A nil client would panic if the reaction were not filtered out first.
+	updateAttendance(nil, &discordgo.Session{}, r, nil, "joined")
+}
