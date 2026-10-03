@@ -2,7 +2,7 @@ module example.com/gcf
 
 go 1.26.8
 
-require github.com/GoogleCloudPlatform/functions-framework-go v1.9.0
+require github.com/GoogleCloudPlatform/functions-framework-go v1.9.2
 
 require (
 	cloud.google.com/go v0.123.0 // indirect
