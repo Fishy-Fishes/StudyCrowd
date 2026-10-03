@@ -22,6 +22,7 @@ import (
 	"regexp"
 
 	"github.com/google/uuid"
+	"google.golang.org/api/iterator"
 )
 
 var dateRegex = regexp.MustCompile(`(?i)\b(?:` +
@@ -240,7 +241,73 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 	}
 }
 
-func init() {
+func handleReactionAdd(db *firestore.Client, s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+	ctx := context.Background()
+
+	// Find the event corresponding to the Discord message.
+	iter := db.Collection("posts").
+		Where("embed_message_id", "==", r.MessageID).
+		Limit(1).
+		Documents(ctx)
+
+	doc, err := iter.Next()
+	if err == iterator.Done {
+		return // Not an event message.
+	}
+	if err != nil {
+		log.Printf("failed to find event: %v", err)
+		return
+	}
+
+	// Add the user to the attendance list.
+	_, err = doc.Ref.Update(ctx, []firestore.Update{
+		{
+			Path:  "attending",
+			Value: firestore.ArrayUnion(r.UserID),
+		},
+	})
+	if err != nil {
+		log.Printf("failed to add attendee: %v", err)
+		return
+	}
+
+	log.Printf("user %s joined event %s", r.UserID, doc.Ref.ID)
+}
+
+func handleReactionRemove(db *firestore.Client, s *discordgo.Session, r *discordgo.MessageReactionRemove) {
+	ctx := context.Background()
+
+	// Find the event corresponding to the Discord message.
+	iter := db.Collection("posts").
+		Where("embed_message_id", "==", r.MessageID).
+		Limit(1).
+		Documents(ctx)
+
+	doc, err := iter.Next()
+	if err == iterator.Done {
+		return // Not an event message.
+	}
+	if err != nil {
+		log.Printf("failed to find event: %v", err)
+		return
+	}
+
+	// Remove the user from the attendance list.
+	_, err = doc.Ref.Update(ctx, []firestore.Update{
+		{
+			Path:  "attending",
+			Value: firestore.ArrayRemove(r.UserID),
+		},
+	})
+	if err != nil {
+		log.Printf("failed to remove attendee: %v", err)
+		return
+	}
+
+	log.Printf("user %s left event %s", r.UserID, doc.Ref.ID)
+}
+
+func main() {
 	var err error
 	db, err := firestore.NewClientWithDatabase(context.Background(), firestore.DetectProjectID, "studycrowd-db1")
 	if err != nil {
@@ -263,6 +330,14 @@ func init() {
 
 	session.AddHandler(func(s *discordgo.Session, r *discordgo.MessageCreate) {
 		handleMessageSent(jevToken, db, s, r)
+	})
+
+	session.AddHandler(func(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+		handleReactionAdd(db, s, r)
+	})
+
+	session.AddHandler(func(s *discordgo.Session, r *discordgo.MessageReactionRemove) {
+		handleReactionRemove(db, s, r)
 	})
 
 	err = session.Open()
