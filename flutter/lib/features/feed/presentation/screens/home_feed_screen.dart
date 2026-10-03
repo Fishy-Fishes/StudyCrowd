@@ -110,11 +110,14 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
           children: [
             for (final post in posts)
               StudyPostCard(
-                authorName: _authorName(post.author),
+                authorName: _authorName(post),
                 timeAgo: post.timeAgo,
                 postContent: post.title,
                 avatarAsset: 'assets/images/header_avatar.png',
+                avatarUrl: post.authorAvatar,
+                communityTag: post.serverName,
                 attendeeCount: post.attendeeCount,
+                attendeeNames: post.attendeeNames,
                 showGoingButton: true,
                 isGoing: _currentUser != null &&
                     post.attending.contains(_currentUser!.id),
@@ -131,7 +134,11 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   void _toggleRsvp(StudyPost post) {
     final user = widget.currentUser;
     if (user == null) return;
-    PostRepository.toggleRsvp(postId: post.id, userId: user.id).catchError(
+    PostRepository.toggleRsvp(
+      postId: post.id,
+      userId: user.id,
+      userName: user.displayName,
+    ).catchError(
       (Object e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -146,10 +153,11 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     );
   }
 
-  String _authorName(String authorId) {
+  String _authorName(StudyPost post) {
     final user = widget.currentUser;
-    if (user != null && authorId == user.id) return user.displayName;
-    return '@$authorId';
+    if (post.authorName != null) return post.authorName!;
+    if (user != null && post.author == user.id) return user.displayName;
+    return '@${post.author}';
   }
 }
 

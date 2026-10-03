@@ -48,6 +48,7 @@ class PostRepository {
   static Future<void> toggleRsvp({
     required String postId,
     required String userId,
+    required String userName,
   }) async {
     final postRef = _posts.doc(postId);
     final bookmarkRef = _bookmarksFor(userId).doc(postId);
@@ -63,11 +64,13 @@ class PostRepository {
     if (isGoing) {
       batch.update(postRef, {
         'attending': FieldValue.arrayRemove([userId]),
+        'attendee_names.$userId': FieldValue.delete(),
       });
       batch.delete(bookmarkRef);
     } else {
       batch.update(postRef, {
         'attending': FieldValue.arrayUnion([userId]),
+        'attendee_names.$userId': userName,
       });
       batch.set(bookmarkRef, {
         'bookmarkedAt': FieldValue.serverTimestamp(),
@@ -76,6 +79,9 @@ class PostRepository {
         'author': data['author'] ?? '',
         'postCreatedAt': data['createdAt'] ?? 0,
         'postUuid': data['uuid'],
+        'author_name': data['author_name'],
+        'author_avatar': data['author_avatar'],
+        'server_name': data['server_name'],
       });
     }
     await batch.commit();

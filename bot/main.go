@@ -252,11 +252,17 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 	if jevRes.Category == "new_event" {
 		eventID := uuid.NewString()
 		post := map[string]any{
-			"uuid":      eventID,
-			"createdAt": time.Now().Unix(),
-			"author":    r.Author.ID,
-			"title":     r.Content,
-			"attending": []string{r.Author.ID},
+			"uuid":           eventID,
+			"createdAt":      time.Now().Unix(),
+			"author":         r.Author.ID,
+			"author_name":    r.Author.DisplayName(),
+			"author_avatar":  r.Author.AvatarURL("128"),
+			"title":          r.Content,
+			"attending":      []string{r.Author.ID},
+			"attendee_names": map[string]string{r.Author.ID: r.Author.DisplayName()},
+		}
+		if guild, err := s.State.Guild(r.GuildID); err == nil {
+			post["server_name"] = guild.Name
 		}
 
 		_, t, _ := extractDate(r.Content, time.Now())
@@ -323,10 +329,18 @@ func updateAttendance(db *firestore.Client, s *discordgo.Session, r *discordgo.M
 	}
 
 	bookmark := db.Collection("users").Doc(r.UserID).Collection("bookmarks").Doc(doc.Ref.ID)
+	nameField := firestore.FieldPath{"attendee_names", r.UserID}
 	batch := db.Batch()
 	if going {
 		post := doc.Data()
-		batch.Update(doc.Ref, []firestore.Update{{Path: "attending", Value: firestore.ArrayUnion(r.UserID)}})
+		name := r.UserID
+		if user, err := s.User(r.UserID); err == nil {
+			name = user.DisplayName()
+		}
+		batch.Update(doc.Ref, []firestore.Update{
+			{Path: "attending", Value: firestore.ArrayUnion(r.UserID)},
+			{FieldPath: nameField, Value: name},
+		})
 		batch.Set(bookmark, map[string]any{
 			"bookmarkedAt":  firestore.ServerTimestamp,
 			"postId":        doc.Ref.ID,
@@ -334,9 +348,15 @@ func updateAttendance(db *firestore.Client, s *discordgo.Session, r *discordgo.M
 			"author":        post["author"],
 			"postCreatedAt": post["createdAt"],
 			"postUuid":      post["uuid"],
+			"author_name":   post["author_name"],
+			"author_avatar": post["author_avatar"],
+			"server_name":   post["server_name"],
 		})
 	} else {
-		batch.Update(doc.Ref, []firestore.Update{{Path: "attending", Value: firestore.ArrayRemove(r.UserID)}})
+		batch.Update(doc.Ref, []firestore.Update{
+			{Path: "attending", Value: firestore.ArrayRemove(r.UserID)},
+			{FieldPath: nameField, Value: firestore.Delete},
+		})
 		batch.Delete(bookmark)
 	}
 	if _, err := batch.Commit(ctx); err != nil {

@@ -3,19 +3,27 @@ class StudyPost {
   final String id;
   final String title;
   final String author;
+  final String? authorName;
+  final String? authorAvatar;
+  final String? serverName;
   final String? embedMessageId;
   final String? uuid;
   final int? createdAtSeconds;
   final List<String> attending;
+  final Map<String, String> attendeeNameById;
 
   const StudyPost({
     required this.id,
     required this.title,
     required this.author,
+    this.authorName,
+    this.authorAvatar,
+    this.serverName,
     this.embedMessageId,
     this.uuid,
     this.createdAtSeconds,
     this.attending = const [],
+    this.attendeeNameById = const {},
   });
 
   factory StudyPost.fromDoc(String id, Map<String, dynamic> data) {
@@ -24,6 +32,9 @@ class StudyPost {
       id: id,
       title: (data['title'] as String?) ?? '',
       author: (data['author'] as String?) ?? '',
+      authorName: data['author_name'] as String?,
+      authorAvatar: data['author_avatar'] as String?,
+      serverName: data['server_name'] as String?,
       embedMessageId: data['embed_message_id'] as String?,
       uuid: data['uuid'] as String?,
       createdAtSeconds: data['createdAt'] is num
@@ -32,10 +43,16 @@ class StudyPost {
       attending: attending is List
           ? attending.map((e) => e.toString()).toList()
           : const [],
+      attendeeNameById:
+          (data['attendee_names'] as Map?)?.cast<String, String>() ?? const {},
     );
   }
 
   int get attendeeCount => attending.length;
+
+  /// Names of attendees in RSVP order, skipping anyone whose name isn't known.
+  String get attendeeNames =>
+      attending.map((id) => attendeeNameById[id]).whereType<String>().join(', ');
 
   
   String get timeAgo {
