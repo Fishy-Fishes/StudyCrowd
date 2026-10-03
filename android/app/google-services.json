@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "388111767374",
+    "project_id": "studycrowd-51fdd",
+    "storage_bucket": "studycrowd-51fdd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:388111767374:android:a3a5b4b4db574b5680301f",
+        "android_client_info": {
+          "package_name": "com.example.studycrowd"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7Hiu1leU-g5RXI3NuwwDstITPwxOJFYk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
