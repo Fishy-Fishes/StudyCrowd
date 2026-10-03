@@ -280,8 +280,10 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 			return
 		}
 
-		if err := s.MessageReactionAdd(r.ChannelID, msg.ID, attendEmoji); err != nil {
-			log.Printf("failed to add %s reaction: %v", attendEmoji, err)
+		for _, emoji := range []string{attendEmoji, deleteEmoji} {
+			if err := s.MessageReactionAdd(r.ChannelID, msg.ID, emoji); err != nil {
+				log.Printf("failed to add %s reaction: %v", emoji, err)
+			}
 		}
 
 		post["embed_message_id"] = msg.ID
@@ -416,7 +418,7 @@ func findEvent(ctx context.Context, db *firestore.Client, messageID string) *fir
 }
 
 // deleteEvent removes an event when its host reacts ❌: the embed, the post (so it
-// leaves the app feed) and every attendee's saved copy. Anyone else's ❌ is removed.
+// leaves the app feed) and every attendee's saved copy. Anyone else's ❌ does nothing.
 func deleteEvent(db *firestore.Client, s *discordgo.Session, r *discordgo.MessageReaction) {
 	if isSelf(s, r.UserID) {
 		return
@@ -436,9 +438,6 @@ func deleteEvent(db *firestore.Client, s *discordgo.Session, r *discordgo.Messag
 	}
 
 	if r.UserID != post.Author {
-		if err := s.MessageReactionRemove(r.ChannelID, r.MessageID, deleteEmoji, r.UserID); err != nil {
-			log.Printf("failed to remove %s from event %s: %v", deleteEmoji, doc.Ref.ID, err)
-		}
 		return
 	}
 
