@@ -9,7 +9,16 @@ async function name(id){
     const j=await r.json(); chanName[id]=j.name||'?';}catch{chanName[id]='?'}
   return chanName[id];
 }
-let seq=null,hb=null;
+// Typing indicator: shown from the moment a message arrives until our own reply posts (or 90s).
+const typing={};
+function typeOnce(ch){ fetch(`${API}/channels/${ch}/typing`,{method:'POST',headers:{Authorization:'Bot '+TOKEN}}).catch(()=>{}); }
+function startTyping(ch){
+  stopTyping(ch); typeOnce(ch);
+  const t=setInterval(()=>typeOnce(ch),8000);
+  typing[ch]={t,stop:setTimeout(()=>stopTyping(ch),90000)};
+}
+function stopTyping(ch){ const x=typing[ch]; if(!x) return; clearInterval(x.t); clearTimeout(x.stop); delete typing[ch]; }
+let seq=null,hb=null,selfId=null;
 function connect(){
   const ws=new WebSocket('wss://gateway.discord.gg/?v=10&encoding=json');
   ws.onopen=()=>console.log('[bridge] socket open');
@@ -22,11 +31,14 @@ function connect(){
       hb=setInterval(()=>ws.send(JSON.stringify({op:1,d:seq})),m.d.heartbeat_interval);
       ws.send(JSON.stringify({op:2,d:{token:TOKEN,intents:1|512|32768,
         properties:{os:'linux',browser:'claude-bridge',device:'claude-bridge'}}}));
-    } else if(m.t==='READY') console.log('[bridge] ready as',m.d.user.username);
+    } else if(m.t==='READY') {selfId=m.d.user.id;console.log('[bridge] ready as',m.d.user.username);}
     else if(m.t==='MESSAGE_CREATE'){
-      const d=m.d; if(d.author.bot) return;
+      const d=m.d;
+      if(d.author.id===selfId){ stopTyping(d.channel_id); return; }
+      if(d.author.bot) return;
       const n=await name(d.channel_id);
       if(!n.includes('claude')) return;
+      startTyping(d.channel_id);
       console.log(`[#${n}] ${d.author.username} (${d.author.id}) msg ${d.id}: ${JSON.stringify(d.content)}`);
     }
   };
