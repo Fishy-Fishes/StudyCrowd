@@ -18,10 +18,8 @@ import (
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 
 	"context"
-)
-
-import (
 	"regexp"
+	"github.com/google/uuid"
 )
 
 var dateRegex = regexp.MustCompile(`(?i)\b(?:` +
@@ -184,7 +182,7 @@ func jevCall(bearerToken string, message string) (JevMessage, error) {
 	return jevMsg, nil
 }
 
-func handleMessageSent(jevBearerToken string, s *discordgo.Session, r *discordgo.MessageCreate) {
+func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo.Session, r *discordgo.MessageCreate) {
 	// curl -X POST "https://classifydiscordmessage-jj62desesa-uc.a.run.app"   -H "Content-Type: application/json"   -d '{"message":"im down to go to the burger event!"}' -H "Authorization: Bearer bazinga"
 
 	if r.Author.Bot {
@@ -201,6 +199,11 @@ func handleMessageSent(jevBearerToken string, s *discordgo.Session, r *discordgo
 	fmt.Println(jevRes.Category)
 	if jevRes.Category == "new_event" {
 		var fields []*discordgo.MessageEmbedField
+		post := map[string]any{
+			"uuid":      uuid.NewString(),
+			"createdAt": time.Now().Unix(),
+			"author":    r.Author.ID,
+		}
 
 		_, t, found := extractDate(r.Content, time.Now())
 
@@ -209,6 +212,7 @@ func handleMessageSent(jevBearerToken string, s *discordgo.Session, r *discordgo
 				Name:  "time",
 				Value: t.Format("2 Jan 2006"),
 			})
+			post["timestamp"] = t.Unix()
 		}
 
 		embed := &discordgo.MessageEmbed{
@@ -222,12 +226,17 @@ func handleMessageSent(jevBearerToken string, s *discordgo.Session, r *discordgo
 		if err != nil {
 			panic(err)
 		}
+
+		_, _, err = db.Collection("guilds").Doc("test").Collection("posts").Add(context.Background(), post)
+		if err != nil {
+			return
+		}
 	}
 }
 
-func main() {
+func init() {
 	var err error
-	db, err = firestore.NewClientWithDatabase(context.Background(), firestore.DetectProjectID, "studycrowd-db1")
+	db, err := firestore.NewClientWithDatabase(context.Background(), firestore.DetectProjectID, "studycrowd-db1")
 	if err != nil {
 		panic(err)
 	}
@@ -240,14 +249,14 @@ func main() {
 		return
 	}
 
-	jevToken := os.Getenv("DISCORD_TOKEN")
+	jevToken := os.Getenv("CLIENT_AUTH_TOKEN")
 
 	session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as %s", r.User.String())
 	})
 
 	session.AddHandler(func(s *discordgo.Session, r *discordgo.MessageCreate) {
-		handleMessageSent(jevToken, s, r)
+		handleMessageSent(jevToken, db, s, r)
 	})
 
 	err = session.Open()
@@ -263,4 +272,12 @@ func main() {
 	if err != nil {
 		log.Printf("could not close session gracefully: %s", err)
 	}
+
+		functions.HTTP("health", health)
+
 }
+
+func health(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "up")
+}
+
