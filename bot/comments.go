@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -11,39 +10,39 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-// Comments live under posts/{postId}/comments and flow both ways:
-//   - Discord → app: a reply to an event embed, or a message in the embed's
-//     thread, is saved as a comment (saveDiscordComment).
-//   - App → Discord: a comment written in the app is posted into the embed's
-//     thread, which is created on first use (watchAppComments).
+// Comments live under posts/{postId}/comments, and every comment ends up in
+// the thread on its event's embed:
+//   - A message in the thread is saved as a comment (it is already there).
+//   - A reply to the embed in the channel, or a comment written in the app, is
+//     saved and then posted into the thread as an embed with the author and
+//     text (watchComments). The thread is created on first use.
 //
-// A comment's discord_message_id marks it as already being in Discord, so
-// nothing is mirrored twice.
+// A comment's discord_message_id is its message in the thread, so a comment
+// that has one is never posted twice.
 
-// saveDiscordComment stores r as a comment if it replies to an event embed or
-// was sent in an event's thread. It reports whether r was a comment.
+// saveDiscordComment stores r as a comment if it was sent in an event's thread
+// or replies to an event embed. It reports whether r was a comment.
 func saveDiscordComment(db *firestore.Client, s *discordgo.Session, r *discordgo.MessageCreate) bool {
 	ctx := context.Background()
+	comment := map[string]any{
+		"author":        r.Author.ID,
+		"author_name":   r.Author.DisplayName(),
+		"author_avatar": r.Author.AvatarURL("128"),
+		"text":          r.Content,
+		"createdAt":     time.Now().Unix(),
+	}
 	var post *firestore.DocumentSnapshot
-	switch {
-	case r.MessageReference != nil:
-		post = findEvent(ctx, db, r.MessageReference.MessageID)
-	case isThread(s, r.ChannelID):
+	if isThread(s, r.ChannelID) {
 		post = findEventByThread(ctx, db, r.ChannelID)
+		comment["discord_message_id"] = r.ID // already in the thread
+	} else if r.MessageReference != nil {
+		post = findEvent(ctx, db, r.MessageReference.MessageID) // copied to the thread by watchComments
 	}
 	if post == nil {
 		return false
 	}
 
-	_, _, err := post.Ref.Collection("comments").Add(ctx, map[string]any{
-		"author":             r.Author.ID,
-		"author_name":        r.Author.DisplayName(),
-		"author_avatar":      r.Author.AvatarURL("128"),
-		"text":               r.Content,
-		"createdAt":          time.Now().Unix(),
-		"discord_message_id": r.ID,
-	})
-	if err != nil {
+	if _, _, err := post.Ref.Collection("comments").Add(ctx, comment); err != nil {
 		log.Printf("failed to save comment on event %s: %v", post.Ref.ID, err)
 	}
 	return true
@@ -65,8 +64,8 @@ func findEventByThread(ctx context.Context, db *firestore.Client, threadID strin
 	return doc
 }
 
-// watchAppComments posts comments written in the app into their event's thread.
-func watchAppComments(db *firestore.Client, s *discordgo.Session) {
+// watchComments posts each comment that isn't in its event's thread yet into it.
+func watchComments(db *firestore.Client, s *discordgo.Session) {
 	snapshots := db.CollectionGroup("comments").Snapshots(context.Background())
 	for {
 		snap, err := snapshots.Next()
@@ -76,20 +75,21 @@ func watchAppComments(db *firestore.Client, s *discordgo.Session) {
 		}
 		for _, change := range snap.Changes {
 			if change.Kind == firestore.DocumentAdded {
-				mirrorAppComment(db, s, change.Doc)
+				postCommentToThread(db, s, change.Doc)
 			}
 		}
 	}
 }
 
-func mirrorAppComment(db *firestore.Client, s *discordgo.Session, doc *firestore.DocumentSnapshot) {
+func postCommentToThread(db *firestore.Client, s *discordgo.Session, doc *firestore.DocumentSnapshot) {
 	var comment struct {
 		AuthorName       string `firestore:"author_name"`
+		AuthorAvatar     string `firestore:"author_avatar"`
 		Text             string `firestore:"text"`
 		DiscordMessageID string `firestore:"discord_message_id"`
 	}
 	if err := doc.DataTo(&comment); err != nil || comment.DiscordMessageID != "" {
-		return // Already in Discord (or unreadable).
+		return // Already in the thread (or unreadable).
 	}
 
 	ctx := context.Background()
@@ -121,9 +121,10 @@ func mirrorAppComment(db *firestore.Client, s *discordgo.Session, doc *firestore
 		}
 	}
 
-	msg, err := s.ChannelMessageSendComplex(post.ThreadID, &discordgo.MessageSend{
-		Content:         fmt.Sprintf("**%s** (in the app): %s", comment.AuthorName, comment.Text),
-		AllowedMentions: &discordgo.MessageAllowedMentions{}, // never ping from app text
+	msg, err := s.ChannelMessageSendEmbed(post.ThreadID, &discordgo.MessageEmbed{
+		Author:      &discordgo.MessageEmbedAuthor{Name: comment.AuthorName, IconURL: comment.AuthorAvatar},
+		Description: comment.Text,
+		Color:       embedColor,
 	})
 	if err != nil {
 		log.Printf("failed to post comment %s to Discord: %v", doc.Ref.ID, err)

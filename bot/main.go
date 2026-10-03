@@ -521,7 +521,7 @@ func main() {
 	}
 
 	go watchGoingCounts(db, session)
-	go watchAppComments(db, session)
+	go watchComments(db, session)
 
 	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, os.Interrupt)
