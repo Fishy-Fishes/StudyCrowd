@@ -241,7 +241,7 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 	}
 }
 
-func handleReactionAdd(db *firestore.Client, s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+func handleReactionAdd(db *firestore.Client, _ *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	ctx := context.Background()
 
 	// Find the event corresponding to the Discord message.
@@ -274,7 +274,7 @@ func handleReactionAdd(db *firestore.Client, s *discordgo.Session, r *discordgo.
 	log.Printf("user %s joined event %s", r.UserID, doc.Ref.ID)
 }
 
-func handleReactionRemove(db *firestore.Client, s *discordgo.Session, r *discordgo.MessageReactionRemove) {
+func handleReactionRemove(db *firestore.Client, _ *discordgo.Session, r *discordgo.MessageReactionRemove) {
 	ctx := context.Background()
 
 	// Find the event corresponding to the Discord message.
