@@ -252,11 +252,16 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 	if jevRes.Category == "new_event" {
 		eventID := uuid.NewString()
 		post := map[string]any{
-			"uuid":      eventID,
-			"createdAt": time.Now().Unix(),
-			"author":    r.Author.ID,
-			"title":     r.Content,
-			"attending": []string{r.Author.ID},
+			"uuid":          eventID,
+			"createdAt":     time.Now().Unix(),
+			"author":        r.Author.ID,
+			"author_name":   r.Author.DisplayName(),
+			"author_avatar": r.Author.AvatarURL("128"),
+			"title":         r.Content,
+			"attending":     []string{r.Author.ID},
+		}
+		if guild, err := s.State.Guild(r.GuildID); err == nil {
+			post["server_name"] = guild.Name
 		}
 
 		_, t, _ := extractDate(r.Content, time.Now())
@@ -334,6 +339,9 @@ func updateAttendance(db *firestore.Client, s *discordgo.Session, r *discordgo.M
 			"author":        post["author"],
 			"postCreatedAt": post["createdAt"],
 			"postUuid":      post["uuid"],
+			"author_name":   post["author_name"],
+			"author_avatar": post["author_avatar"],
+			"server_name":   post["server_name"],
 		})
 	} else {
 		batch.Update(doc.Ref, []firestore.Update{{Path: "attending", Value: firestore.ArrayRemove(r.UserID)}})

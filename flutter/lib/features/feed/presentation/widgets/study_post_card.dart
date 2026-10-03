@@ -9,6 +9,7 @@ class StudyPostCard extends StatelessWidget {
   final String? communityTag;
   final String postContent;
   final String avatarAsset;
+  final String? avatarUrl;
   final String? mediaAsset;
   final int attendeeCount;
   final String? attendeeNames;
@@ -23,6 +24,7 @@ class StudyPostCard extends StatelessWidget {
     required this.timeAgo,
     required this.postContent,
     required this.avatarAsset,
+    this.avatarUrl,
     this.communityTag,
     this.mediaAsset,
     this.attendeeCount = 0,
@@ -50,10 +52,14 @@ class StudyPostCard extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: ClipOval(
-                child: Image.asset(
-                  avatarAsset,
-                  fit: BoxFit.cover,
-                ),
+                child: avatarUrl == null
+                    ? Image.asset(avatarAsset, fit: BoxFit.cover)
+                    : Image.network(
+                        avatarUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) =>
+                            Image.asset(avatarAsset, fit: BoxFit.cover),
+                      ),
               ),
             ),
           ),

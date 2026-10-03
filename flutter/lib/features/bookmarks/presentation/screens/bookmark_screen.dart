@@ -85,10 +85,12 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
             return Column(
               children: [
                 BookmarkPostCard(
-                  authorName: '@${post.author}',
+                  authorName: post.authorName ?? '@${post.author}',
                   timeAgo: post.timeAgo,
                   description: post.title,
                   avatarAsset: 'assets/images/header_avatar.png',
+                  avatarUrl: post.authorAvatar,
+                  communityTag: post.serverName,
                   onRemove: () => _removeBookmark(post),
                 ),
                 if (index < bookmarks.length - 1)

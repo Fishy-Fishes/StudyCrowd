@@ -11,6 +11,7 @@ class BookmarkPostCard extends StatelessWidget {
   final String? communityTag;
   final String description;
   final String avatarAsset;
+  final String? avatarUrl;
   final VoidCallback? onRemove;
 
   const BookmarkPostCard({
@@ -18,6 +19,7 @@ class BookmarkPostCard extends StatelessWidget {
     required this.authorName,
     required this.description,
     required this.avatarAsset,
+    this.avatarUrl,
     this.timeAgo,
     this.communityTag,
     this.onRemove,
@@ -35,10 +37,14 @@ class BookmarkPostCard extends StatelessWidget {
             child: SizedBox(
               width: 53,
               height: 53,
-              child: Image.asset(
-                avatarAsset,
-                fit: BoxFit.cover,
-              ),
+              child: avatarUrl == null
+                  ? Image.asset(avatarAsset, fit: BoxFit.cover)
+                  : Image.network(
+                      avatarUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) =>
+                          Image.asset(avatarAsset, fit: BoxFit.cover),
+                    ),
             ),
           ),
 

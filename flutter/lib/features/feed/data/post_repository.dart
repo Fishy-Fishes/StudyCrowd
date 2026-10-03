@@ -76,6 +76,9 @@ class PostRepository {
         'author': data['author'] ?? '',
         'postCreatedAt': data['createdAt'] ?? 0,
         'postUuid': data['uuid'],
+        'author_name': data['author_name'],
+        'author_avatar': data['author_avatar'],
+        'server_name': data['server_name'],
       });
     }
     await batch.commit();
