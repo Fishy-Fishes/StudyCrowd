@@ -13,7 +13,7 @@ var db *firestore.Client
 
 func init() {
 	var err error
-	db, err = firestore.NewClient(context.Background(), firestore.DetectProjectID)
+	db, err = firestore.NewClientWithDatabase(context.Background(), firestore.DetectProjectID, "studycrowd-db1")
 	if err != nil {
 		panic(err)
 	}
