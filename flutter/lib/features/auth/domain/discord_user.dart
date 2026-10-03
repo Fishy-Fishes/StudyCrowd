@@ -25,7 +25,7 @@ class DiscordUser {
 
   bool get isAccessTokenExpired {
     if (expiresAtMs == null) return false;
-    // Treat tokens with under 60s left as expired.
+    
     return DateTime.now().millisecondsSinceEpoch >= expiresAtMs! - 60000;
   }
 
@@ -35,8 +35,8 @@ class DiscordUser {
       final ext = isGif ? 'gif' : 'png';
       return 'https://cdn.discordapp.com/avatars/$id/$avatar.$ext?size=256';
     }
-    // Migrated Discord usernames have discriminator "0"; the new default
-    // avatar index is derived from the user ID: (id >> 22) % 6.
+    
+    
     final userId = int.tryParse(id);
     final defaultIndex = userId != null ? ((userId >> 22) % 6) : 0;
     return 'https://cdn.discordapp.com/embed/avatars/$defaultIndex.png';

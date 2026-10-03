@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// Single, streamlined type scale used across the feed and bookmark screens.
-/// One family (Inter), differentiated by weight and size instead of mixing
-/// multiple display/body fonts.
+
+
+
 class AppTextStyles {
   AppTextStyles._();
 

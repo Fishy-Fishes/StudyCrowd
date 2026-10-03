@@ -98,7 +98,7 @@ class _SignInScreenState extends State<SignInScreen> {
             physics: const ClampingScrollPhysics(),
             child: ConstrainedBox(
               constraints: const BoxConstraints(
-                maxWidth: 402, // Exact Figma frame width
+                maxWidth: 402, 
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -107,7 +107,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   children: [
                     const SizedBox(height: 16),
 
-                    // Figma Node 39:453 - Hero Illustration
+                    
                     Center(
                       child: SizedBox(
                         width: 377,
@@ -122,7 +122,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
                     const SizedBox(height: 28),
 
-                    // Figma Node 39:466 - "Study\nCrowd." Title
+                    
                     Text(
                       'Study\nCrowd.',
                       textAlign: TextAlign.left,
@@ -137,7 +137,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
                     const SizedBox(height: 14),
 
-                    // Figma Node 39:468 - Subtitle
+                    
                     Text(
                       'Crowd Source temporary study spaces.\nLeave with a persistent social network.',
                       textAlign: TextAlign.left,
@@ -151,7 +151,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
                     const SizedBox(height: 48),
 
-                    // Figma Node 39:455 - Discord OAuth Button
+                    
                     Center(
                       child: TactileButton(
                         onTap: _isLoading ? null : _handleDiscordSignIn,

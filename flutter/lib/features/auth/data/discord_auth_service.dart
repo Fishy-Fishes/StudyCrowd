@@ -11,8 +11,8 @@ class DiscordAuthService {
   static const String redirectUri = 'https://studycrowd-51fdd.web.app/auth-callback';
   static const String customScheme = 'studycrowd';
 
-  // Token exchange/refresh/revoke runs server-side so the client secret
-  // never ships inside the Android app.
+  
+  
   static const String _oauthFunctionUrl =
       'https://us-central1-studycrowd-51fdd.cloudfunctions.net/discordOauth';
 
@@ -23,20 +23,20 @@ class DiscordAuthService {
 
   static String? _pendingState;
 
-  /// State is a random CSRF token that Discord echoes back to us. It must
-  /// match, otherwise the redirect is forged or a different flow's response.
+  
+  
   static String _generateState() {
     final random = Random.secure();
     final bytes = List<int>.generate(32, (_) => random.nextInt(256));
     return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
   }
 
-  /// Saves the authenticated user to persistent secure storage.
+  
   static Future<void> saveUser(DiscordUser user) async {
     await _storage.write(key: _userStorageKey, value: jsonEncode(user.toJson()));
   }
 
-  /// Retrieves the stored user session, or null. Does NOT validate expiry.
+  
   static Future<DiscordUser?> getSavedUser() async {
     try {
       final userJson = await _storage.read(key: _userStorageKey);
@@ -49,14 +49,14 @@ class DiscordAuthService {
     }
   }
 
-  /// Returns a usable session, refreshing the access token when expired and
-  /// clearing the session when it cannot be recovered.
+  
+  
   static Future<DiscordUser?> getValidSavedUser() async {
     final user = await getSavedUser();
     if (user == null) return null;
 
     if (!user.isAccessTokenExpired) {
-      // Sessions saved before expiry tracking existed: verify once.
+      
       if (user.expiresAtMs == null) {
         final stillValid = await _validateAccessToken(user.accessToken);
         if (!stillValid) {
@@ -112,7 +112,7 @@ class DiscordAuthService {
     );
   }
 
-  /// Clears the session and revokes the access token on Discord's side.
+  
   static Future<void> signOut() async {
     final user = await getSavedUser();
     if (user != null && user.accessToken.isNotEmpty) {
@@ -150,7 +150,7 @@ class DiscordAuthService {
     return data;
   }
 
-  /// Launches the Discord OAuth2 authorization flow in a secure Custom Tab.
+  
   static Future<DiscordUser?> signInWithDiscord() async {
     final state = _generateState();
     _pendingState = state;
@@ -166,13 +166,13 @@ class DiscordAuthService {
     final uri = Uri.parse(_authUrl).replace(queryParameters: queryParams);
 
     try {
-      // 1. Launch in-app secure web auth window
+      
       final result = await FlutterWebAuth2.authenticate(
         url: uri.toString(),
         callbackUrlScheme: customScheme,
       );
 
-      // 2. Parse and validate the redirect
+      
       final responseUri = Uri.parse(result);
 
       final returnedState = responseUri.queryParameters['state'];
@@ -189,7 +189,7 @@ class DiscordAuthService {
         throw Exception(error);
       }
 
-      // 3. Exchange authorization code for tokens (server-side)
+      
       final tokenData = await _callOAuthFunction({
         'action': 'exchange',
         'code': code,
@@ -200,7 +200,7 @@ class DiscordAuthService {
       final refreshToken = tokenData['refresh_token'] as String?;
       final expiresIn = tokenData['expires_in'] as int?;
 
-      // 4. Fetch the authenticated user's Discord profile
+      
       final userResponse = await http.get(
         Uri.parse(_userUrl),
         headers: {'Authorization': 'Bearer $accessToken'},
@@ -221,7 +221,7 @@ class DiscordAuthService {
             : null,
       );
 
-      // 5. Automatically persist session locally
+      
       await saveUser(user);
 
       return user;

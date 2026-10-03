@@ -23,7 +23,7 @@ class BottomNavBar extends StatelessWidget {
           height: 62,
           child: Row(
             children: [
-              // Home Tab Pill (Figma Node 21:292, width: 181, height: 62)
+              
               Expanded(
                 flex: 181,
                 child: _NavPill(
@@ -36,7 +36,7 @@ class BottomNavBar extends StatelessWidget {
 
               const SizedBox(width: 12),
 
-              // Bookmark Tab Pill (Figma Node 21:295, width: 190, height: 62)
+              
               Expanded(
                 flex: 190,
                 child: _NavPill(

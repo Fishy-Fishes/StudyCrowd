@@ -17,7 +17,7 @@ void main() async {
     debugPrint('Firebase initialization skipped for this platform: $e');
   }
 
-  // Restore and validate persistent Discord session
+  
   final savedUser = await DiscordAuthService.getValidSavedUser();
 
   runApp(StudyCrowdApp(initialUser: savedUser));

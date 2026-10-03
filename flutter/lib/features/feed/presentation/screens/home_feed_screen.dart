@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../bookmarks/presentation/screens/bookmark_screen.dart';
-import '../widgets/app_header.dart';
-import '../widgets/study_post_card.dart';
-import '../widgets/bottom_nav_bar.dart';
-
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../auth/domain/discord_user.dart';
+import '../../../bookmarks/presentation/screens/bookmark_screen.dart';
+import '../../data/post_repository.dart';
+import '../../domain/study_post.dart';
+import '../widgets/app_header.dart';
+import '../widgets/bottom_nav_bar.dart';
+import '../widgets/study_post_card.dart';
 
 class HomeFeedScreen extends StatefulWidget {
   final DiscordUser? currentUser;
@@ -29,25 +31,26 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(
-            maxWidth: 402, // Exact Figma frame width
+            maxWidth: 402, 
           ),
           child: Stack(
             children: [
-              // Main Content (shared header + active tab body)
+              
               Column(
                 children: [
-                  // Flush Header with status bar coverage (Figma Node 21:288)
+                  
                   AppHeader(
                     currentUser: widget.currentUser,
                   ),
 
-                  // Active tab body
+                  
                   Expanded(
                     child: IndexedStack(
                       index: _currentTabIndex,
                       children: [
                         _buildFeedList(),
                         BookmarkScreen(
+                          user: widget.currentUser,
                           onBrowse: () {
                             setState(() {
                               _currentTabIndex = 0;
@@ -60,7 +63,6 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 ],
               ),
 
-              // Floating Dual-Pill Bottom Navigation Bar (Figma Node 21:291)
               Positioned(
                 left: 0,
                 right: 0,
@@ -82,34 +84,101 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   }
 
   Widget _buildFeedList() {
-    return ListView(
-      padding: const EdgeInsets.only(top: 18.0, bottom: 90.0),
-      children: [
-        // Post 1: Ethane Nguyen (Figma Node 21:263)
-        StudyPostCard(
-          authorName: 'Ethane Nguyen 🙍🧑‍🦯',
-          timeAgo: '.1d',
-          communityTag: 'CSIT Discord',
-          postContent: 'Hey I want to meet today at uni in building 80.',
-          avatarAsset: 'assets/images/avatar_dragon.png',
-          mediaAsset: 'assets/images/post1_meeting.png',
-          attendeeCount: 11,
-          attendeeNames: 'Remy, Sadiq, Liam...',
-          showGoingButton: true,
-          onGoingPressed: () {},
-        ),
+    return StreamBuilder<List<StudyPost>>(
+      stream: PostRepository.watchPosts(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return _FeedMessage(
+            "Couldn't load posts\n${snapshot.error}".trim(),
+            icon: Icons.error_outline_rounded,
+          );
+        }
+        if (!snapshot.hasData) {
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          );
+        }
+        final posts = snapshot.data!;
+        if (posts.isEmpty) {
+          return const _FeedMessage(
+            'No study sessions yet',
+            icon: Icons.groups_outlined,
+          );
+        }
+        return ListView(
+          padding: const EdgeInsets.only(top: 18.0, bottom: 90.0),
+          children: [
+            for (final post in posts)
+              StudyPostCard(
+                authorName: _authorName(post.author),
+                timeAgo: post.timeAgo,
+                postContent: post.title,
+                avatarAsset: 'assets/images/header_avatar.png',
+                attendeeCount: post.attendeeCount,
+                showGoingButton: true,
+                isGoing: _currentUser != null &&
+                    post.attending.contains(_currentUser!.id),
+                onGoingPressed: () => _toggleRsvp(post),
+              ),
+          ],
+        );
+      },
+    );
+  }
 
-        // Post 2: Sethcha Sara (Figma Node 21:276)
-        const StudyPostCard(
-          authorName: 'Sethcha Sara🐶',
-          timeAgo: '.23min',
-          communityTag: 'BERSS Discord',
-          postContent:
-              'We make meeting at RMIT library study biomedical Engineering pls come and join us!!',
-          avatarAsset: 'assets/images/avatar_anime.png',
-          mediaAsset: 'assets/images/post2_library.png',
+  DiscordUser? get _currentUser => widget.currentUser;
+
+  void _toggleRsvp(StudyPost post) {
+    final user = widget.currentUser;
+    if (user == null) return;
+    PostRepository.toggleRsvp(postId: post.id, userId: user.id).catchError(
+      (Object e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Could not update: $e'),
+              backgroundColor: const Color(0xFFD32F2F),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+    );
+  }
+
+  String _authorName(String authorId) {
+    final user = widget.currentUser;
+    if (user != null && authorId == user.id) return user.displayName;
+    return '@$authorId';
+  }
+}
+
+class _FeedMessage extends StatelessWidget {
+  final String message;
+  final IconData icon;
+
+  const _FeedMessage(this.message, {required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 56, color: Colors.white.withValues(alpha: 0.45)),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.description.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

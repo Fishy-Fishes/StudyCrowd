@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/tactile_button.dart';
 
 class StudyPostCard extends StatelessWidget {
   final String authorName;
   final String timeAgo;
-  final String communityTag;
+  final String? communityTag;
   final String postContent;
   final String avatarAsset;
-  final String mediaAsset;
+  final String? mediaAsset;
   final int attendeeCount;
   final String? attendeeNames;
   final bool showGoingButton;
+  final bool isGoing;
   final VoidCallback? onGoingPressed;
   final VoidCallback? onRemove;
 
@@ -19,13 +21,14 @@ class StudyPostCard extends StatelessWidget {
     super.key,
     required this.authorName,
     required this.timeAgo,
-    required this.communityTag,
     required this.postContent,
     required this.avatarAsset,
-    required this.mediaAsset,
+    this.communityTag,
+    this.mediaAsset,
     this.attendeeCount = 0,
     this.attendeeNames,
     this.showGoingButton = false,
+    this.isGoing = false,
     this.onGoingPressed,
     this.onRemove,
   });
@@ -37,7 +40,7 @@ class StudyPostCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left Column: Circular Avatar (Figma: x:16, width:53, height:53)
+          
           Padding(
             padding: const EdgeInsets.only(left: 16.0, top: 2.0),
             child: Container(
@@ -57,14 +60,14 @@ class StudyPostCard extends StatelessWidget {
 
           const SizedBox(width: 8),
 
-          // Right Column: Author, Post Text, Indented Photo, and Action Row
+          
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(right: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Line 1: Author Name, Time, and Community Tag
+                  
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -89,12 +92,14 @@ class StudyPostCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Text(
-                        communityTag,
-                        style: AppTextStyles.tag,
-                      ),
+                      if (communityTag != null) ...[
+                        Text(
+                          communityTag!,
+                          style: AppTextStyles.tag,
+                        ),
+                        if (onRemove != null) const SizedBox(width: 8),
+                      ],
                       if (onRemove != null) ...[
-                        const SizedBox(width: 8),
                         TactileButton(
                           onTap: onRemove!,
                           pressedScale: 0.85,
@@ -120,7 +125,7 @@ class StudyPostCard extends StatelessWidget {
 
                   const SizedBox(height: 3),
 
-                  // Line 2: Post Description
+                  
                   Text(
                     postContent,
                     style: AppTextStyles.description,
@@ -128,34 +133,36 @@ class StudyPostCard extends StatelessWidget {
 
                   const SizedBox(height: 8),
 
-                  // Line 3: Media Photo (corner radius 10, black border, height 331)
-                  Container(
-                    width: double.infinity,
-                    height: 331,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: Colors.black,
-                        width: 1.0,
+                  
+                  if (mediaAsset != null) ...[
+                    Container(
+                      width: double.infinity,
+                      height: 331,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Colors.black,
+                          width: 1.0,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(9),
+                        child: Image.asset(
+                          mediaAsset!,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(9),
-                      child: Image.asset(
-                        mediaAsset,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
+                  ],
 
-                  // Line 4: Attendees & "I'm going" Action Row
+                  
                   if (showGoingButton || (attendeeNames != null && attendeeNames!.isNotEmpty)) ...[
                     const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Attendees count & participant names wrapped in Expanded to prevent overflow
+                        
                         Expanded(
                           child: Row(
                             children: [
@@ -186,15 +193,24 @@ class StudyPostCard extends StatelessWidget {
 
                         const SizedBox(width: 8),
 
-                        // "I'm going ->" Action Pill Button (Figma Node 21:380)
+                        
                         if (showGoingButton)
                           TactileButton(
                             onTap: onGoingPressed ?? () {},
                             pressedScale: 0.90,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                border: Border.all(color: Colors.white, width: 1.0),
+                                color: isGoing
+                                    ? AppColors.accentPill
+                                    : Colors.transparent,
+                                border: Border.all(
+                                  color: isGoing
+                                      ? AppColors.accentPill
+                                      : Colors.white,
+                                  width: 1.0,
+                                ),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Row(
@@ -202,14 +218,22 @@ class StudyPostCard extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Text(
-                                    "I’m going",
-                                    style: AppTextStyles.caption,
+                                    isGoing ? 'Going' : "I’m going",
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: isGoing
+                                          ? AppColors.scaffoldBackground
+                                          : Colors.white,
+                                    ),
                                   ),
                                   const SizedBox(width: 3),
-                                  const Icon(
-                                    Icons.arrow_circle_right_outlined,
+                                  Icon(
+                                    isGoing
+                                        ? Icons.check_rounded
+                                        : Icons.arrow_circle_right_outlined,
                                     size: 13,
-                                    color: Colors.white,
+                                    color: isGoing
+                                        ? AppColors.scaffoldBackground
+                                        : Colors.white,
                                   ),
                                 ],
                               ),

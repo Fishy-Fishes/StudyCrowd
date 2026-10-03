@@ -65,8 +65,8 @@
     window.onload = function() {
       const urlParams = new URLSearchParams(window.location.search);
 
-      // Forward every query parameter (code, state, error, ...) to the app
-      // using the custom scheme the app registers (studycrowd://).
+      
+      
       const forwarded = [];
       urlParams.forEach(function(value, key) {
         forwarded.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
@@ -74,15 +74,15 @@
       const appUrl = 'studycrowd://oauth-callback' +
         (forwarded.length > 0 ? '?' + forwarded.join('&') : '');
 
-      // The button is a user gesture, which browsers always allow to hand
-      // off to an external app; show it immediately.
+      
+      
       const btn = document.getElementById('manual-btn');
       if (btn) {
         btn.href = appUrl;
         btn.style.display = 'inline-block';
       }
 
-      // Best-effort automatic hand-off.
+      
       window.location.href = appUrl;
     };
   </script>

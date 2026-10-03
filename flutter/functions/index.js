@@ -2,12 +2,12 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 
-// Define secrets using Firebase Secret Manager
+
 const typesafeApiKey = defineSecret("TYPESAFE_API_KEY");
 const clientAuthToken = defineSecret("CLIENT_AUTH_TOKEN");
 
-// Discord OAuth client credentials are held server-side only.
-// Set with: firebase functions:secrets:set DISCORD_CLIENT_SECRET
+
+
 const discordClientSecret = defineSecret("DISCORD_CLIENT_SECRET");
 const DISCORD_CLIENT_ID = "1555853808955822120";
 const DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
@@ -84,7 +84,7 @@ exports.discordOauth = onRequest(
 exports.classifyDiscordMessage = onRequest(
   { secrets: [typesafeApiKey, clientAuthToken], invoker: "public" },
   async (req, res) => {
-    // Only accept POST requests
+    
     if (req.method !== "POST") {
       res.status(405).json({ error: "Method Not Allowed. Use POST." });
       return;
@@ -172,7 +172,7 @@ exports.classifyDiscordMessage = onRequest(
 
       const data = await response.json();
 
-      // TypeSafe AI answers format: data.answers.category.choice
+      
       const categoryAnswer = data.answers && data.answers.category;
       const category =
         categoryAnswer?.choice ||

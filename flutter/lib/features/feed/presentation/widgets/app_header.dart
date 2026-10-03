@@ -30,7 +30,7 @@ class AppHeader extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Avatar
+                
                 Container(
                   width: 72,
                   height: 72,
@@ -56,7 +56,7 @@ class AppHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
 
-                // Name & Username
+                
                 Text(
                   currentUser?.displayName ?? 'Guest User',
                   style: const TextStyle(
@@ -88,7 +88,7 @@ class AppHeader extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                // Sign Out Button
+                
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -141,17 +141,17 @@ class AppHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Left spacer to keep the logo centered (grid icon removed)
+              
               const SizedBox(width: 48),
 
-              // Center Logo (Figma Node 21:290)
+              
               Image.asset(
                 'assets/images/app_logo.png',
                 height: 42,
                 fit: BoxFit.contain,
               ),
 
-              // Right Profile Avatar (Figma Node 22:429 / Live Discord Avatar)
+              
               TactileButton(
                 onTap: onProfilePressed ?? () => _showProfileModal(context),
                 pressedScale: 0.90,
