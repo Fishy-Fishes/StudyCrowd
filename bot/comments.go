@@ -56,6 +56,14 @@ func isThread(s *discordgo.Session, channelID string) bool {
 	return err == nil && ch.IsThread()
 }
 
+func inGuild(s *discordgo.Session, channelID string) bool {
+	ch, err := s.State.Channel(channelID)
+	if err != nil {
+		ch, err = s.Channel(channelID)
+	}
+	return err == nil && ch.GuildID != ""
+}
+
 func findEventByThread(ctx context.Context, db *firestore.Client, threadID string) *firestore.DocumentSnapshot {
 	doc, err := db.Collection("posts").Where("thread_id", "==", threadID).Limit(1).Documents(ctx).Next()
 	if err != nil && err != iterator.Done {
@@ -107,6 +115,9 @@ func postCommentToThread(db *firestore.Client, s *discordgo.Session, doc *firest
 	}
 	if err := postDoc.DataTo(&post); err != nil || post.ChannelID == "" {
 		return // App-only post: there is no embed to thread under.
+	}
+	if !inGuild(s, post.ChannelID) {
+		return // DMs can't have threads; the comment stays in the app.
 	}
 
 	if post.ThreadID == "" {
