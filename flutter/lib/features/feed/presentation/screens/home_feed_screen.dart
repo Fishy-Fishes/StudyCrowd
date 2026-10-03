@@ -112,7 +112,8 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
           );
         }
         return ListView(
-          padding: const EdgeInsets.only(top: 18.0, bottom: 90.0),
+          // Clears the nav bar and the + button above it (90 + 52 + gap).
+          padding: const EdgeInsets.only(top: 18.0, bottom: 160.0),
           children: [
             for (final post in posts)
               GestureDetector(
