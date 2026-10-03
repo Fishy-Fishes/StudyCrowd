@@ -6,21 +6,31 @@ import '../../../../core/widgets/tactile_button.dart';
 import '../../../auth/domain/discord_user.dart';
 import '../../data/post_repository.dart';
 
-/// Bottom sheet for posting a new study session from the app.
+/// Compose sheet for posting a study session from the app. The card is anchored
+/// to the top of the screen with the Post button floating below it; both slide
+/// down together and slide back up when dismissed.
 class NewPostSheet extends StatefulWidget {
   final DiscordUser user;
 
   const NewPostSheet({super.key, required this.user});
 
   static Future<void> show(BuildContext context, DiscordUser user) {
-    return showModalBottomSheet(
+    return showGeneralDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.headerBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      barrierDismissible: true,
+      barrierLabel: 'Close',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (_, _, _) => NewPostSheet(user: user),
+      transitionBuilder: (_, animation, _, child) => SlideTransition(
+        position: animation.drive(
+          Tween(
+            begin: const Offset(0, -1),
+            end: Offset.zero,
+          ).chain(CurveTween(curve: Curves.easeOutCubic)),
+        ),
+        child: child,
       ),
-      builder: (_) => NewPostSheet(user: user),
     );
   }
 
@@ -60,64 +70,100 @@ class _NewPostSheetState extends State<NewPostSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        20 + MediaQuery.of(context).viewInsets.bottom,
+    // Transparent Material so the floating Post button gets text styling too.
+    return Material(
+      type: MaterialType.transparency,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            _ComposeCard(controller: _controller),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 14, 20, 0),
+              child: _PostButton(posting: _posting, onTap: _post),
+            ),
+          ],
+        ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('New study session', style: AppTextStyles.sectionTitle),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            minLines: 2,
-            maxLines: 5,
-            cursorColor: AppColors.accentPill,
-            style: AppTextStyles.description,
-            decoration: InputDecoration(
-              hintText: 'Study at the library at 3?',
-              hintStyle: AppTextStyles.description.copyWith(
-                color: AppColors.textMuted,
-              ),
-              filled: true,
-              fillColor: AppColors.cardSurface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TactileButton(
-              onTap: _post,
-              pressedScale: 0.9,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 6,
+    );
+  }
+}
+
+/// The dark card holding the text box, flush with the top of the screen.
+class _ComposeCard extends StatelessWidget {
+  final TextEditingController controller;
+
+  const _ComposeCard({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.headerBackground,
+      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: SizedBox(
+            height: 116,
+            child: TextField(
+              controller: controller,
+              autofocus: true,
+              expands: true,
+              maxLines: null,
+              textAlignVertical: TextAlignVertical.top,
+              cursorColor: AppColors.accentPill,
+              style: AppTextStyles.description,
+              decoration: InputDecoration(
+                hintText: 'Study at the library at 3?',
+                hintStyle: AppTextStyles.description.copyWith(
+                  color: AppColors.textMuted,
                 ),
-                decoration: BoxDecoration(
-                  color: AppColors.accentPill,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  _posting ? 'Posting…' : 'Post',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.buttonText,
-                  ),
+                filled: true,
+                fillColor: AppColors.cardSurface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PostButton extends StatelessWidget {
+  final bool posting;
+  final VoidCallback onTap;
+
+  const _PostButton({required this.posting, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return TactileButton(
+      onTap: onTap,
+      pressedScale: 0.92,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.accentPill,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black38,
+              blurRadius: 12,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Text(
+          posting ? 'Posting…' : 'Post',
+          style: AppTextStyles.authorName.copyWith(color: AppColors.buttonText),
+        ),
       ),
     );
   }
