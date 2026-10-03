@@ -41,3 +41,12 @@ func TestBuildEventEmbedWithDate(t *testing.T) {
 		t.Errorf("fields = %+v", e.Fields)
 	}
 }
+
+func TestBuildEventEmbedUsesDisplayName(t *testing.T) {
+	author := &discordgo.User{ID: "1", Username: "txt1", GlobalName: "Tex"}
+	e := buildEventEmbed(author, "study?", time.Time{}, "x")
+
+	if e.Author.Name != "Tex is hosting" {
+		t.Errorf("author = %q", e.Author.Name)
+	}
+}

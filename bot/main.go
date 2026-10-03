@@ -45,7 +45,7 @@ func buildEventEmbed(author *discordgo.User, content string, when time.Time, id 
 
 	embed := &discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{
-			Name:    author.Username + " is hosting",
+			Name:    author.DisplayName() + " is hosting",
 			IconURL: author.AvatarURL("64"),
 		},
 		Description: strings.Join(lines, "\n"),
