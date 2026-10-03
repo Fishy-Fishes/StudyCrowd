@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_layout.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../auth/domain/discord_user.dart';
 import '../../../bookmarks/presentation/screens/bookmark_screen.dart';
@@ -30,37 +31,30 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
-      body: Center(
+      body: Column(
+        children: [
+          // The header spans the full width; everything below is capped.
+          AppHeader(currentUser: widget.currentUser),
+          Expanded(
+            child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(
-            maxWidth: 402, 
+            maxWidth: AppLayout.maxContentWidth,
           ),
           child: Stack(
+            fit: StackFit.expand,
             children: [
-              
-              Column(
+              IndexedStack(
+                index: _currentTabIndex,
                 children: [
-                  
-                  AppHeader(
-                    currentUser: widget.currentUser,
-                  ),
-
-                  
-                  Expanded(
-                    child: IndexedStack(
-                      index: _currentTabIndex,
-                      children: [
-                        _buildFeedList(),
-                        BookmarkScreen(
-                          user: widget.currentUser,
-                          onBrowse: () {
-                            setState(() {
-                              _currentTabIndex = 0;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
+                  _buildFeedList(),
+                  BookmarkScreen(
+                    user: widget.currentUser,
+                    onBrowse: () {
+                      setState(() {
+                        _currentTabIndex = 0;
+                      });
+                    },
                   ),
                 ],
               ),
@@ -88,6 +82,9 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
             ],
           ),
         ),
+            ),
+          ),
+        ],
       ),
     );
   }

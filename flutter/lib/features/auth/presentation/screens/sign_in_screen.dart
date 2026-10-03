@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_layout.dart';
 import '../../../../core/widgets/tactile_button.dart';
 import '../../../feed/presentation/screens/home_feed_screen.dart';
 import '../../data/discord_auth_service.dart';
@@ -98,7 +99,7 @@ class _SignInScreenState extends State<SignInScreen> {
             physics: const ClampingScrollPhysics(),
             child: ConstrainedBox(
               constraints: const BoxConstraints(
-                maxWidth: 402, 
+                maxWidth: AppLayout.maxContentWidth,
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32.0),
