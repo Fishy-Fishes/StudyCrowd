@@ -334,7 +334,10 @@ func newFirestoreClient(ctx context.Context) (*firestore.Client, error) {
 	project, key := os.Getenv("FIRESTORE_PROJECT_ID"), os.Getenv("FIRESTORE_API_KEY")
 	if project != "" && key != "" {
 		log.Printf("firestore: using FIRESTORE_PROJECT_ID %q with an API key", project)
-		return firestore.NewClientWithDatabase(ctx, project, firestoreDatabase, option.WithAPIKey(key))
+		// passthrough makes gRPC dial the hostname rather than a resolved IP, so an HTTPS proxy
+		// that allows hosts by name (as in sandboxed runs) can tunnel the connection.
+		return firestore.NewClientWithDatabase(ctx, project, firestoreDatabase,
+			option.WithAPIKey(key), option.WithEndpoint("passthrough:///firestore.googleapis.com:443"))
 	}
 	log.Print("firestore: using detected project and credentials")
 	return firestore.NewClientWithDatabase(ctx, firestore.DetectProjectID, firestoreDatabase)
