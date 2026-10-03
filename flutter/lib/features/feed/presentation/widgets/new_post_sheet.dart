@@ -6,8 +6,11 @@ import '../../../../core/widgets/tactile_button.dart';
 import '../../../auth/domain/discord_user.dart';
 import '../../data/post_repository.dart';
 
-/// Compose sheet for posting a study session from the app. The card is anchored
-/// to the top of the screen with the Post button floating below it; both slide
+/// Space around the card and between the card and the Post button.
+const double _gutter = 14;
+
+/// Compose sheet for posting a study session from the app. The card sits at
+/// the top of the screen with the Post button floating below it; both slide
 /// down together and slide back up when dismissed.
 class NewPostSheet extends StatefulWidget {
   final DiscordUser user;
@@ -81,7 +84,7 @@ class _NewPostSheetState extends State<NewPostSheet> {
           children: [
             _ComposeCard(controller: _controller),
             Padding(
-              padding: const EdgeInsets.fromLTRB(0, 14, 20, 0),
+              padding: const EdgeInsets.fromLTRB(0, _gutter, _gutter, 0),
               child: _PostButton(posting: _posting, onTap: _post),
             ),
           ],
@@ -91,7 +94,7 @@ class _NewPostSheetState extends State<NewPostSheet> {
   }
 }
 
-/// The dark card holding the text box, flush with the top of the screen.
+/// The dark card holding the text box, floating a gutter below the top of the screen.
 class _ComposeCard extends StatelessWidget {
   final TextEditingController controller;
 
@@ -99,35 +102,46 @@ class _ComposeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.headerBackground,
-      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: SizedBox(
-            height: 116,
-            child: TextField(
-              controller: controller,
-              autofocus: true,
-              expands: true,
-              maxLines: null,
-              textAlignVertical: TextAlignVertical.top,
-              cursorColor: AppColors.accentPill,
-              style: AppTextStyles.description,
-              decoration: InputDecoration(
-                hintText: 'Study at the library at 3?',
-                hintStyle: AppTextStyles.description.copyWith(
-                  color: AppColors.textMuted,
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(_gutter, _gutter, _gutter, 0),
+        child: Material(
+          color: AppColors.headerBackground,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('New study session', style: AppTextStyles.sectionTitle),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 116,
+                  child: TextField(
+                    controller: controller,
+                    autofocus: true,
+                    expands: true,
+                    maxLines: null,
+                    textAlignVertical: TextAlignVertical.top,
+                    cursorColor: AppColors.accentPill,
+                    style: AppTextStyles.description,
+                    decoration: InputDecoration(
+                      hintText: 'Study at the library at 3?',
+                      hintStyle: AppTextStyles.description.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.cardSurface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
                 ),
-                filled: true,
-                fillColor: AppColors.cardSurface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
+              ],
             ),
           ),
         ),
