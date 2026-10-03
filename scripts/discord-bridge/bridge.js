@@ -17,11 +17,9 @@ async function api(method,path,body,tries=3){
 }
 const notify=t=>api('POST',`/channels/${CHANNEL}/messages`,{content:t}).catch(()=>{});
 
-// Typing indicator: from message arrival until our own reply posts (or 90s).
-const typing={};
+// Typing indicator: one pulse per message. Discord can't cancel typing, only let it lapse
+// (~10s), so repeating it showed "typing" for messages that never got a reply.
 const typeOnce=()=>api('POST',`/channels/${CHANNEL}/typing`,null,1).catch(()=>{});
-function startTyping(){ stopTyping(); typeOnce(); typing.t=setInterval(typeOnce,8000); typing.s=setTimeout(stopTyping,90000); }
-function stopTyping(){ clearInterval(typing.t); clearTimeout(typing.s); }
 
 // Image parsing: download image attachments so the session can open them with the Read tool.
 // Files go to $BRIDGE_IMAGE_DIR (default <tmpdir>/studycrowd-bridge-images); max 8 MB each, 4 per message.
@@ -86,7 +84,7 @@ function connect(){
   ws.onopen=()=>console.log('[bridge] socket open');
   ws.onerror=e=>console.log('[bridge] error',e.message||e.type);
   ws.onclose=async e=>{
-    console.log('[bridge] closed',e.code,e.reason||''); clearInterval(hb); stopTyping();
+    console.log('[bridge] closed',e.code,e.reason||''); clearInterval(hb);
     if([4004,4013,4014].includes(e.code)){
       await notify(`:warning: Bridge stopped: Discord closed the connection with code ${e.code} (${e.code===4004?'bad bot token':'Message Content intent is not enabled'}). A human needs to fix this.`);
       process.exit(2);
@@ -117,9 +115,9 @@ function connect(){
     } else if(m.t==='MESSAGE_CREATE'){
       const d=m.d; if(d.channel_id!==CHANNEL) return;
       await caughtUp;
-      if(d.author.id===selfId){stopTyping();markSeen(d.id);return;}
+      if(d.author.id===selfId){markSeen(d.id);return;}
       if(d.author.bot){markSeen(d.id);return;}
-      startTyping();
+      typeOnce();
       await forward(d);
     }
   };
