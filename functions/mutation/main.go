@@ -24,6 +24,10 @@ func init() {
 
 // FIXME: Authorisation with discord to get the appropriate user.
 func createPost(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	form := r.MultipartForm.Value
 	post := map[string]any{
 		"uuid": uuid.NewString(),
@@ -36,7 +40,7 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if timestamp_raw, ok := form["timestamp"]; ok && len(timestamp_raw) > 0 {
-		if timestamp, err := strconv.Atoi(timestamp_raw[0]); err != nil {
+		if timestamp, err := strconv.Atoi(timestamp_raw[0]); err == nil {
 			post["timestamp"] = timestamp
 		} else {
 			http.Error(w, err.Error(), http.StatusBadRequest)
