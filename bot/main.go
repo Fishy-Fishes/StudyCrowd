@@ -244,6 +244,9 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 	if saveDiscordComment(db, s, r) {
 		return // Replies to an event are comments, not new events.
 	}
+	if strings.TrimSpace(r.Content) == "" {
+		return // Images or stickers on their own; the classifier rejects empty text.
+	}
 
 	jevRes, err := jevCall(jevBearerToken, r.Content)
 
