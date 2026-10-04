@@ -27,6 +27,7 @@ class PostRepository {
   static Future<void> createPost({
     required DiscordUser author,
     required String text,
+    DateTime? date,
   }) {
     final ref = _posts.doc();
     final post = {
@@ -38,6 +39,7 @@ class PostRepository {
       'title': text,
       'attending': [author.id],
       'attendee_names': {author.id: author.displayName},
+      if (date != null) 'timestamp': date.millisecondsSinceEpoch ~/ 1000,
     };
     // The host is going, so the post is saved for them too.
     return (_db.batch()
