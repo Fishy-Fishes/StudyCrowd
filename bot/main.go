@@ -292,7 +292,12 @@ func handleMessageSent(jevBearerToken string, db *firestore.Client, s *discordgo
 		post["embed_message_id"] = msg.ID
 		post["channel_id"] = msg.ChannelID
 
-		if _, _, err := db.Collection("posts").Add(context.Background(), post); err != nil {
+		// The host is going, so the event is saved for them too.
+		ref := db.Collection("posts").NewDoc()
+		batch := db.Batch()
+		batch.Create(ref, post)
+		batch.Set(db.Collection("users").Doc(r.Author.ID).Collection("bookmarks").Doc(ref.ID), bookmarkOf(ref.ID, post))
+		if _, err := batch.Commit(context.Background()); err != nil {
 			log.Printf("failed to save event %s: %v", eventID, err)
 		}
 	}
@@ -342,17 +347,7 @@ func updateAttendance(db *firestore.Client, s *discordgo.Session, r *discordgo.M
 			{Path: "attending", Value: firestore.ArrayUnion(r.UserID)},
 			{FieldPath: nameField, Value: name},
 		})
-		batch.Set(bookmark, map[string]any{
-			"bookmarkedAt":  firestore.ServerTimestamp,
-			"postId":        doc.Ref.ID,
-			"title":         post["title"],
-			"author":        post["author"],
-			"postCreatedAt": post["createdAt"],
-			"postUuid":      post["uuid"],
-			"author_name":   post["author_name"],
-			"author_avatar": post["author_avatar"],
-			"server_name":   post["server_name"],
-		})
+		batch.Set(bookmark, bookmarkOf(doc.Ref.ID, post))
 	} else {
 		batch.Update(doc.Ref, []firestore.Update{
 			{Path: "attending", Value: firestore.ArrayRemove(r.UserID)},
@@ -366,6 +361,21 @@ func updateAttendance(db *firestore.Client, s *discordgo.Session, r *discordgo.M
 	}
 
 	log.Printf("user %s going=%t to event %s", r.UserID, going, doc.Ref.ID)
+}
+
+// bookmarkOf is a saved-post entry for postID, in the shape the app writes.
+func bookmarkOf(postID string, post map[string]any) map[string]any {
+	return map[string]any{
+		"bookmarkedAt":  firestore.ServerTimestamp,
+		"postId":        postID,
+		"title":         post["title"],
+		"author":        post["author"],
+		"postCreatedAt": post["createdAt"],
+		"postUuid":      post["uuid"],
+		"author_name":   post["author_name"],
+		"author_avatar": post["author_avatar"],
+		"server_name":   post["server_name"],
+	}
 }
 
 // watchGoingCounts refreshes an event embed's going count whenever its attending list

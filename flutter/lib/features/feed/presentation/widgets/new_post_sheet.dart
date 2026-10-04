@@ -96,7 +96,7 @@ class _NewPostSheetState extends State<NewPostSheet> {
         child: child!,
       ),
     );
-    if (picked != null) setState(() => _date = picked);
+    if (picked != null && mounted) setState(() => _date = picked);
   }
 
   @override
