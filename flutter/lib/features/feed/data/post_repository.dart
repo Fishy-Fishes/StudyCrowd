@@ -29,7 +29,7 @@ class PostRepository {
     required String text,
   }) {
     final ref = _posts.doc();
-    return ref.set({
+    final post = {
       'uuid': ref.id,
       'createdAt': DateTime.now().millisecondsSinceEpoch ~/ 1000,
       'author': author.id,
@@ -38,8 +38,30 @@ class PostRepository {
       'title': text,
       'attending': [author.id],
       'attendee_names': {author.id: author.displayName},
-    });
+    };
+    // The host is going, so the post is saved for them too.
+    return (_db.batch()
+          ..set(ref, post)
+          ..set(_bookmarksFor(author.id).doc(ref.id), _bookmark(ref.id, post)))
+        .commit();
   }
+
+  /// A saved-post entry for [postId], copied from the post's fields.
+  static Map<String, dynamic> _bookmark(
+    String postId,
+    Map<String, dynamic> post,
+  ) =>
+      {
+        'bookmarkedAt': FieldValue.serverTimestamp(),
+        'postId': postId,
+        'title': post['title'] ?? '',
+        'author': post['author'] ?? '',
+        'postCreatedAt': post['createdAt'] ?? 0,
+        'postUuid': post['uuid'],
+        'author_name': post['author_name'],
+        'author_avatar': post['author_avatar'],
+        'server_name': post['server_name'],
+      };
 
   static Stream<List<StudyPost>> watchPosts() {
     return _posts
@@ -92,17 +114,7 @@ class PostRepository {
         'attending': FieldValue.arrayUnion([userId]),
         'attendee_names.$userId': userName,
       });
-      batch.set(bookmarkRef, {
-        'bookmarkedAt': FieldValue.serverTimestamp(),
-        'postId': postId,
-        'title': data['title'] ?? '',
-        'author': data['author'] ?? '',
-        'postCreatedAt': data['createdAt'] ?? 0,
-        'postUuid': data['uuid'],
-        'author_name': data['author_name'],
-        'author_avatar': data['author_avatar'],
-        'server_name': data['server_name'],
-      });
+      batch.set(bookmarkRef, _bookmark(postId, data));
     }
     await batch.commit();
   }
